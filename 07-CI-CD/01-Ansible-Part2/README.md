@@ -24,7 +24,7 @@
 
 - [inventory.ini](inventory.ini)
 
-- [playbook1.yml](playbook.yml)
+- [playbook1.yml](playbook1.yml)
 
 
 ![1.1](img/1.1.png)
