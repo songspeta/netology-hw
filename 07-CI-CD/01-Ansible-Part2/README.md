@@ -73,11 +73,11 @@
 
 ## Решение 3
 
-- [playbook2.yml](playbook.yml)
+- [playbook2.yml](playbook2.yml)
 
 ![3.1](img/3.1.png)
 
-![3.2](img/2.2.png)
+![3.2](img/3.2.png)
 
 ---
 
