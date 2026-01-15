@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Задание Terraform</title>
+    <style>
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        .logo {
+            width: 200px;
+            height: 200px;
+            margin-bottom: 20px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #ff4d7c, #00cc66, #6600cc, #0066ff);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+            position: relative;
+        }
+        .logo::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            background-color: #000;
+            border-radius: 50%;
+        }
+        h1 {
+            font-size: 2rem;
+            margin: 10px 0;
+        }
+        .status {
+            font-size: 1.2rem;
+            color: #00cc66;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .status::before {
+            content: '✅';
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="logo"></div>
+    <h1>Спетницкий Дмитрий Игоревич</h1>
+    <div class="status">Задание выполнено</div>
+    <div class="server">Сервер: {{ ansible_hostname }}</div>
+</body>
+</html>

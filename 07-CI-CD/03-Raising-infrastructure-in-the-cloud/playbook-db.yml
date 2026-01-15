@@ -1,0 +1,34 @@
+---
+- name: Install and configure PostgreSQL on DB server
+  hosts: databases
+  become: yes
+  gather_facts: yes
+
+  tasks:
+    - name: Install PostgreSQL
+      apt:
+        name: postgresql
+        state: present
+        update_cache: yes
+
+    - name: Ensure PostgreSQL is started and enabled
+      systemd:
+        name: postgresql
+        state: started
+        enabled: yes
+
+    - name: Check PostgreSQL service status
+      systemd:
+        name: postgresql
+      register: postgres_status
+
+    - name: Show PostgreSQL status (debug)
+      debug:
+        msg: "PostgreSQL is {{ 'running' if postgres_status.status.ActiveState == 'active' else 'NOT running' }}"
+
+    - name: (Optional) Create a test database
+      postgresql_db:
+        name: testdb
+        login_user: postgres
+      become_user: postgres
+      ignore_errors: yes

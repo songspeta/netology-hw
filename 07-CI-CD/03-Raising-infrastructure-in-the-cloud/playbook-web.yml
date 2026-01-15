@@ -1,0 +1,31 @@
+---
+- name: Deploy custom nginx page
+  hosts: webservers
+  become: yes
+  gather_facts: yes
+
+  tasks:
+    - name: Install nginx
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+
+    - name: Ensure nginx is started and enabled
+      systemd:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Template custom index.html with server name
+      template:
+        src: files/index.html.j2
+        dest: /var/www/html/index.html
+        owner: www-data
+        group: www-data
+        mode: '0644'
+
+    - name: Reload nginx to apply changes
+      systemd:
+        name: nginx
+        state: reloaded
