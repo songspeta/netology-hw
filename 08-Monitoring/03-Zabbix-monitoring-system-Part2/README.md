@@ -4,7 +4,7 @@
 
 ---
 ## Установка Zabbix
-[Install zabbix](https://github.com/songspeta/zabbix-01-hw)
+[Install zabbix](https://github.com/songspeta/netology-hw/tree/main/08-Monitoring/02-Zabbix-monitoring-system)
 
 ### Задание 1
 Создайте свой шаблон, в котором будут элементы данных, мониторящие загрузку CPU и RAM хоста.
