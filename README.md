@@ -2,7 +2,7 @@
 
 
 ## 📌 Содержание
-- [01. IT-системы и Linux](#-01-it-системы-и-linux)
+- [01. IT-системы и Linux](01-IT-systems-and-Linux-operating-system)
 - [02. Linux OS](#-02-linux-os)
 - [03. Linux OS Administration](#-03-linux-os-administration)
 - [04. Bash-программирование](#-04-bash-программирование)
