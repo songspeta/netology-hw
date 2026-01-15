@@ -1,0 +1,202 @@
+---
+# Установка Jenkins (LTS) с Java 17
+- name: Установка Jenkins и Go
+  hosts: jenkins
+  become: yes
+  vars:
+    go_version: "1.17.5"
+    go_arch: "linux-amd64"
+    go_url: "https://go.dev/dl/go{{ go_version }}.{{ go_arch }}.tar.gz"
+
+  tasks:
+    - name: Обновление кэша пакетов
+      apt:
+        update_cache: yes
+
+    - name: Установка fontconfig и OpenJDK 17
+      apt:
+        name:
+          - fontconfig
+          - openjdk-17-jre
+        state: present
+
+    - name: Скачивание GPG-ключа Jenkins
+      get_url:
+        url: https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
+        dest: /etc/apt/keyrings/jenkins-keyring.asc
+        mode: '0644'
+
+    - name: Добавление репозитория Jenkins
+      copy:
+        content: |
+          deb [signed-by=/etc/apt/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/
+        dest: /etc/apt/sources.list.d/jenkins.list
+        mode: '0644'
+
+    - name: Обновление кэша после добавления репозитория
+      apt:
+        update_cache: yes
+
+    - name: Установка Jenkins
+      apt:
+        name: jenkins
+        state: present
+
+    - name: Установка Go
+      block:
+        - name: Скачивание Go
+          get_url:
+            url: "{{ go_url }}"
+            dest: "/tmp/go.tar.gz"
+            mode: '0644'
+
+        - name: Распаковка Go в /usr/local
+          unarchive:
+            src: "/tmp/go.tar.gz"
+            dest: "/usr/local"
+            remote_src: yes
+            creates: /usr/local/go/bin/go
+
+        - name: Добавление Go в PATH через /etc/profile
+          lineinfile:
+            path: /etc/profile
+            line: 'export PATH=$PATH:/usr/local/go/bin'
+            create: no
+
+        - name: Проверка версии Go
+          command: /usr/local/go/bin/go version
+          register: go_version_out
+          changed_when: false
+
+        - name: Вывод версии Go
+          debug:
+            msg: "Go version: {{ go_version_out.stdout }}"
+
+    - name: Запуск и включение Jenkins
+      systemd:
+        name: jenkins
+        state: started
+        enabled: yes
+
+    - name: Установка зависимостей для Docker
+      apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+        state: present
+
+    - name: Создание директории для GPG-ключей Docker
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Добавление официального GPG-ключа Docker
+      get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: '0644'
+
+    - name: Добавление репозитория Docker
+      shell: |
+        . /etc/os-release
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $VERSION_CODENAME stable" \
+        | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+      args:
+        executable: /bin/bash
+
+    - name: Обновление кэша после добавления репозитория Docker
+      apt:
+        update_cache: yes
+
+    - name: Установка Docker Engine и плагинов
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+
+    - name: Добавление пользователя spet в группу docker
+      user:
+        name: spet
+        groups: docker
+        append: yes
+    - name: Добавление пользователя jenkins в группу docker
+      user:
+        name: jenkins
+        groups: docker
+        append: yes
+
+
+# Установка Nexus Repository Manager
+- name: Установка Nexus через Docker
+  hosts: nexus
+  become: yes
+
+  tasks:
+    - name: Обновление кэша пакетов
+      apt:
+        update_cache: yes
+
+    - name: Установка зависимостей для Docker
+      apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+        state: present
+
+    - name: Создание директории для GPG-ключей Docker
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Добавление официального GPG-ключа Docker
+      get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: '0644'
+
+    - name: Добавление репозитория Docker
+      shell: |
+        . /etc/os-release
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $VERSION_CODENAME stable" \
+        | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+      args:
+        executable: /bin/bash
+
+    - name: Обновление кэша после добавления репозитория Docker
+      apt:
+        update_cache: yes
+
+    - name: Установка Docker Engine и плагинов
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: present
+
+    - name: Добавление пользователя spet в группу docker
+      user:
+        name: spet
+        groups: docker
+        append: yes
+
+    - name: Запуск Nexus в Docker-контейнере
+      docker_container:
+        name: nexus
+        image: sonatype/nexus3
+        ports:
+          - "8081:8081"
+          - "8082:8082"
+        env:
+          INSTALL4J_ADD_VM_PARAMS: "-Xms512m -Xmx512m -XX:MaxDirectMemorySize=273m"
+        restart_policy: unless-stopped
