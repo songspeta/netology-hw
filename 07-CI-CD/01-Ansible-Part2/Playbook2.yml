@@ -1,0 +1,5 @@
+---
+- name: Deploy Apache on Ubuntu 22.04 in Yandex Cloud with system info
+  hosts: yc
+  roles:
+    - apache_webserver
