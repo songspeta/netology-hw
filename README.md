@@ -11,7 +11,7 @@
 - [07. CI/CD](07-CI-CD)
 - [08. Мониторинг](08-Monitoring)
 - [09. Fault Tolerance](09-Fault-tolerance)
-- [10. Data Storage (в процессе)](#-10-data-storage-в-процессе)
+- [10. Системы хранения и передачи данных (в процессе)](10-Data-storage-and-transmission-systems)
 
 ---
 
