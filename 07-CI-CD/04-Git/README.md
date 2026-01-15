@@ -53,19 +53,8 @@
 
 ---
 
-## Решение 
+## Решение
 
 ![1.1](img/1.1.png)
 
 ---
-
-
-
-
-
-
-
-
-## Граф коммитов
-
-Посмотреть историю ветвления и слияния: [Network Graph](https://github.com/songspeta/lesson-netology-git/network)
