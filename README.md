@@ -103,7 +103,7 @@
 *Модуль находится в разработке. Обновления по мере прохождения курса.*
 - [01. Базы данных, их типы](10-Data-storage-and-transmission-systems/01-Databases-and-types) ✅
 - [02. Кеширование Redis/memcached](10-Data-storage-and-transmission-systems/02-Redis-memcached-caching)✅
-- [03. ELK](10-Data-storage-and-transmission-systems/03-ELK)🚧
+- [03. ELK](10-Data-storage-and-transmission-systems/03-ELK)✅
 
 ---
 
