@@ -1,0 +1,30 @@
+filebeat.inputs:
+  - type: filestream
+    id: nginx-access
+    enabled: true
+    paths:
+      - /var/log/nginx/access.log
+    close_inactive: 5m
+    close_removed: true
+    clean_removed: true
+
+filebeat.modules:
+  - module: nginx
+    access:
+      enabled: true
+      var.paths: ["/var/log/nginx/access.log"]
+    error:
+      enabled: true
+      var.paths: ["/var/log/nginx/error.log"]
+
+output.elasticsearch:
+  hosts: ["http://elasticsearch:9200"]
+  indices:
+    - index: "filebeat-nginx-%{+yyyy.MM.dd}"
+
+setup.kibana:
+  host: "http://kibana:5601"
+
+setup.template.enabled: true
+setup.template.name: "filebeat-nginx"
+setup.template.pattern: "filebeat-nginx-*"
