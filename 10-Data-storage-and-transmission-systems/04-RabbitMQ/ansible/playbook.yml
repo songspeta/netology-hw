@@ -1,0 +1,153 @@
+---
+- name: Prepare hosts files and install RabbitMQ
+  hosts: vm
+  become: yes
+  gather_facts: yes
+  vars:
+    rabbitmq_admin_user: "admin"
+    rabbitmq_admin_password: "admin"
+    rabbitmq_cookie: "NETOLOGY_RABBITMQ_CLUSTER_COOKIE_2026"
+
+  pre_tasks:
+    - name: Wait for SSH to be available
+      wait_for_connection:
+        timeout: 300
+        delay: 10
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Configure /etc/hosts for cluster node resolution
+      lineinfile:
+        path: /etc/hosts
+        line: "{{ hostvars[item].ansible_host }} {{ hostvars[item].ansible_hostname }} {{ hostvars[item].ansible_hostname.split('.')[0] }}"
+        create: yes
+      loop: "{{ groups['vm'] }}"
+      when: item != inventory_hostname
+
+  tasks:
+    - name: Install RabbitMQ server
+      apt:
+        name: rabbitmq-server
+        state: present
+        update_cache: yes
+      register: rabbitmq_install
+      retries: 3
+      delay: 10
+      until: rabbitmq_install is not failed
+
+    - name: Stop RabbitMQ before configuration
+      systemd:
+        name: rabbitmq-server
+        state: stopped
+        enabled: yes
+      ignore_errors: yes
+
+    - name: Configure Erlang cookie
+      copy:
+        content: "{{ rabbitmq_cookie }}"
+        dest: /var/lib/rabbitmq/.erlang.cookie
+        owner: rabbitmq
+        group: rabbitmq
+        mode: '0600'
+      notify: Restart RabbitMQ
+
+    - name: Configure RabbitMQ for external access
+      lineinfile:
+        path: /etc/rabbitmq/rabbitmq.conf
+        line: "listeners.tcp.default = 0.0.0.0:5672"
+        create: yes
+        owner: rabbitmq
+        group: rabbitmq
+        mode: '0644'
+      notify: Restart RabbitMQ
+
+    - name: Start RabbitMQ service
+      systemd:
+        name: rabbitmq-server
+        state: started
+        enabled: yes
+        daemon_reload: yes
+      register: rabbitmq_start
+      retries: 10
+      delay: 10
+      until: rabbitmq_start is not failed
+
+    - name: Enable management plugin
+      rabbitmq_plugin:
+        name: rabbitmq_management
+        state: enabled
+      notify: Restart RabbitMQ
+
+  handlers:
+    - name: Restart RabbitMQ
+      systemd:
+        name: rabbitmq-server
+        state: restarted
+        daemon_reload: yes
+      register: restart_result
+      retries: 3
+      delay: 5
+      until: restart_result is not failed
+
+- name: Configure RabbitMQ cluster
+  hosts: vm
+  become: yes
+  vars:
+    cluster_master_shortname: "{{ hostvars[groups['vm'][0]]['ansible_hostname'].split('.')[0] }}"
+
+  tasks:
+    - name: Wait for all nodes to be ready
+      wait_for_connection:
+        timeout: 300
+        delay: 15
+      delegate_to: "{{ item }}"
+      loop: "{{ groups['vm'] }}"
+
+    - name: Verify cookie consistency across nodes (debug)
+      command: cat /var/lib/rabbitmq/.erlang.cookie
+      register: cookie_check
+      changed_when: false
+
+    - name: Stop app on non-master nodes
+      command: rabbitmqctl stop_app
+      when: inventory_hostname != groups['vm'][0]
+
+    - name: Reset non-master nodes before joining cluster
+      command: rabbitmqctl reset
+      when: inventory_hostname != groups['vm'][0]
+
+    - name: Join cluster on non-master nodes (using SHORT hostname)
+      command: "rabbitmqctl join_cluster rabbit@{{ cluster_master_shortname }}"
+      when: inventory_hostname != groups['vm'][0]
+      register: join_result
+      retries: 5
+      delay: 5
+      until: join_result is not failed or join_result.rc == 0
+
+    - name: Start app on non-master nodes
+      command: rabbitmqctl start_app
+      when: inventory_hostname != groups['vm'][0]
+
+    - name: Create admin user on master node
+      rabbitmq_user:
+        user: "{{ rabbitmq_admin_user }}"
+        password: "{{ rabbitmq_admin_password }}"
+        tags: administrator
+        vhost: /
+        configure_priv: .*
+        write_priv: .*
+        read_priv: .*
+      when: inventory_hostname == groups['vm'][0]
+
+    - name: Set HA policy on master node (apply to ALL queues)
+      command: rabbitmqctl set_policy ha-all ".*" '{"ha-mode":"all"}' --apply-to queues
+      when: inventory_hostname == groups['vm'][0]
+
+    - name: Verify cluster status on master node
+      command: rabbitmqctl cluster_status
+      register: cluster_status
+      changed_when: false
+      when: inventory_hostname == groups['vm'][0]
