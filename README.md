@@ -114,6 +114,7 @@
 - [02. Работа с данными (DDL/DML)](11-Databases/02-DDL_DML) ✅
 - [03. Операции с данными в SQL](11-Databases/03-Data_operations_SQL) ✅
 - [04. Расширенные возможности SQL](11-Databases/04-Advanced_SQL) ✅
+- [05. Индексы](11-Databases/05-Index) ✅
 
 
 ---
