@@ -73,7 +73,7 @@
 *Модуль завершен. Все задания проверены ментором.*
 - [01. Ansible (часть 2)](07-CI-CD/01-Ansible-Part2/) ✅
 - [02. Terraform](07-CI-CD/02-Terraform/) ✅
-- [03. Поднятие инфраструктуры в облаке](07-CI-CD/03-Raising-Infrastructure-in-the-cloud/) ✅
+- [03. Поднятие инфраструктуры в облаке](07-CI-CD/03-Raising-infrastructure-in-the-cloud/) ✅
 - [04. Git](07-CI-CD/04-Git/) ✅
 - [05. CI/CD](07-CI-CD/05-CI-CD/) ✅
 - [06. GitLab](07-CI-CD/06-Gitlab/) ✅
