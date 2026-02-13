@@ -38,11 +38,11 @@ _Приложите скриншоты конфигурации, выполне�
 ├── [docker-compose.yml](postgres-master-slave/docker-compose.yml)
 ├── main/
 │ ├── conf/
-│ │ ├── [postgresql.conf](postgres-master-slave/postgresql.conf) # Конфигурация мастера
-│ │ └── [pg_hba.conf](postgres-master-slave/pg_hba.conf) # Правила доступа
+│ │ ├── [postgresql.conf](postgres-master-slave/main/conf/postgresql.conf) # Конфигурация мастера
+│ │ └── [pg_hba.conf](postgres-master-slave/main/conf/pg_hba.conf) # Правила доступа
 │ ├── data/ # Данные мастера (пустая при старте)
 │ └── init/
-│ └── [01.init.sql](postgres-master-slave/01.init.sql) # Создание пользователя для репликации
+│ └── [01.init.sql](postgres-master-slave/main/init/01.init.sql) # Создание пользователя для репликации
 └── replica/
 └── data/ # Данные реплики (пустая при старте)
 
