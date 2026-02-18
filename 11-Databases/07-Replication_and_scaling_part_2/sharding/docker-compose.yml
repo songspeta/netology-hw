@@ -1,0 +1,134 @@
+services:
+  main_db:
+    image: postgres:15
+    container_name: main_db
+    environment:
+      POSTGRES_DB: main
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./main_db/init:/docker-entrypoint-initdb.d
+      - main_db_data:/var/lib/postgresql/data
+    networks:
+      - shard_net
+    depends_on:
+      users_shard:
+        condition: service_healthy
+      stores_shard:
+        condition: service_healthy
+      books_shard_1:
+        condition: service_healthy
+      books_shard_2:
+        condition: service_healthy
+      books_shard_3:
+        condition: service_healthy
+
+  users_shard:
+    image: postgres:15
+    container_name: users_shard
+    environment:
+      POSTGRES_DB: users_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - ./shard_users/init:/docker-entrypoint-initdb.d
+      - users_db_data:/var/lib/postgresql/data
+    networks:
+      - shard_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  stores_shard:
+    image: postgres:15
+    container_name: stores_shard
+    environment:
+      POSTGRES_DB: stores_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - ./shard_stores/init:/docker-entrypoint-initdb.d
+      - stores_db_data:/var/lib/postgresql/data
+    networks:
+      - shard_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  books_shard_1:
+    image: postgres:15
+    container_name: books_shard_1
+    environment:
+      POSTGRES_DB: books_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - ./books_shard_1/init:/docker-entrypoint-initdb.d
+      - books_1_db_data:/var/lib/postgresql/data
+    networks:
+      - shard_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  books_shard_2:
+    image: postgres:15
+    container_name: books_shard_2
+    environment:
+      POSTGRES_DB: books_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - ./books_shard_2/init:/docker-entrypoint-initdb.d
+      - books_2_db_data:/var/lib/postgresql/data
+    networks:
+      - shard_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  books_shard_3:
+    image: postgres:15
+    container_name: books_shard_3
+    environment:
+      POSTGRES_DB: books_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - ./books_shard_3/init:/docker-entrypoint-initdb.d
+      - books_3_db_data:/var/lib/postgresql/data
+    networks:
+      - shard_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+networks:
+  shard_net:
+    driver: bridge
+
+volumes:
+  main_db_data:
+  users_db_data:
+  stores_db_data:
+  books_1_db_data:
+  books_2_db_data:
+  books_3_db_data:
