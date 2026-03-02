@@ -20,8 +20,8 @@
 
 - Какие сетевые службы в ней разрешены?
 - Какие уязвимости были вами обнаружены? (список со ссылками: достаточно трёх уязвимостей)
-  
-*Приведите ответ в свободной форме.*  
+
+*Приведите ответ в свободной форме.*
 
 
 
@@ -29,7 +29,7 @@
 ---
 
 
-## Решение 
+## Решение
 
 #### сканируем
 ```
@@ -42,8 +42,8 @@ Host is up (0.00047s latency).
 Not shown: 977 closed tcp ports (conn-refused)
 PORT     STATE SERVICE     VERSION
 21/tcp   open  ftp         vsftpd 2.3.4
-| ftp-syst: 
-|   STAT: 
+| ftp-syst:
+|   STAT:
 | FTP server status:
 |      Connected to 192.168.233.129
 |      Logged in as ftp
@@ -56,14 +56,14 @@ PORT     STATE SERVICE     VERSION
 |_End of status
 |_ftp-anon: Anonymous FTP login allowed (FTP code 230)
 22/tcp   open  ssh         OpenSSH 4.7p1 Debian 8ubuntu1 (protocol 2.0)
-| ssh-hostkey: 
+| ssh-hostkey:
 |   1024 60:0f:cf:e1:c0:5f:6a:74:d6:90:24:fa:c4:d5:6c:cd (DSA)
 |_  2048 56:56:24:0f:21:1d:de:a7:2b:ae:61:b1:24:3d:e8:f3 (RSA)
 23/tcp   open  telnet      Linux telnetd
 25/tcp   open  smtp        Postfix smtpd
-| sslv2: 
+| sslv2:
 |   SSLv2 supported
-|   ciphers: 
+|   ciphers:
 |     SSL2_RC2_128_CBC_WITH_MD5
 |     SSL2_DES_64_CBC_WITH_MD5
 |     SSL2_RC4_128_WITH_MD5
@@ -73,13 +73,13 @@ PORT     STATE SERVICE     VERSION
 |_smtp-commands: metasploitable.localdomain, PIPELINING, SIZE 10240000, VRFY, ETRN, STARTTLS, ENHANCEDSTATUSCODES, 8BITMIME, DSN
 |_ssl-date: 2026-03-02T07:26:25+00:00; +7s from scanner time.
 53/tcp   open  domain      ISC BIND 9.4.2
-| dns-nsid: 
+| dns-nsid:
 |_  bind.version: 9.4.2
 80/tcp   open  http        Apache httpd 2.2.8 ((Ubuntu) DAV/2)
 |_http-server-header: Apache/2.2.8 (Ubuntu) DAV/2
 |_http-title: Metasploitable2 - Linux
 111/tcp  open  rpcbind     2 (RPC #100000)
-| rpcinfo: 
+| rpcinfo:
 |   program version    port/proto  service
 |   100000  2            111/tcp   rpcbind
 |   100000  2            111/udp   rpcbind
@@ -101,7 +101,7 @@ PORT     STATE SERVICE     VERSION
 2049/tcp open  nfs         2-4 (RPC #100003)
 2121/tcp open  ftp         ProFTPD 1.3.1
 3306/tcp open  mysql       MySQL 5.0.51a-3ubuntu5
-| mysql-info: 
+| mysql-info:
 |   Protocol: 10
 |   Version: 5.0.51a-3ubuntu5
 |   Thread ID: 9
@@ -112,19 +112,19 @@ PORT     STATE SERVICE     VERSION
 5432/tcp open  postgresql  PostgreSQL DB 8.3.0 - 8.3.7
 |_ssl-date: 2026-03-02T07:26:25+00:00; +7s from scanner time.
 5900/tcp open  vnc         VNC (protocol 3.3)
-| vnc-info: 
+| vnc-info:
 |   Protocol version: 3.3
-|   Security types: 
+|   Security types:
 |_    VNC Authentication (2)
 6000/tcp open  X11         (access denied)
 6667/tcp open  irc         UnrealIRCd
-| irc-info: 
+| irc-info:
 |   users: 1
 |   servers: 1
 |   lusers: 1
 |   lservers: 0
 |   server: irc.Metasploitable.LAN
-|   version: Unreal3.2.8.1. irc.Metasploitable.LAN 
+|   version: Unreal3.2.8.1. irc.Metasploitable.LAN
 |   uptime: 0 days, 0:03:11
 |   source ident: nmap
 |   source host: 3290DCC0.F2A81775.FFFA6D49.IP
@@ -139,15 +139,15 @@ Service Info: Hosts:  metasploitable.localdomain, irc.Metasploitable.LAN; OSs: U
 
 Host script results:
 |_clock-skew: mean: 1h15m07s, deviation: 2h30m00s, median: 6s
-| smb-security-mode: 
+| smb-security-mode:
 |   account_used: guest
 |   authentication_level: user
 |   challenge_response: supported
 |_  message_signing: disabled (dangerous, but default)
-| smb-os-discovery: 
+| smb-os-discovery:
 |   OS: Unix (Samba 3.0.20-Debian)
 |   Computer name: metasploitable
-|   NetBIOS computer name: 
+|   NetBIOS computer name:
 |   Domain name: localdomain
 |   FQDN: metasploitable.localdomain
 |_  System time: 2026-03-02T02:26:17-05:00
@@ -178,7 +178,7 @@ Nmap done: 1 IP address (1 host up) scanned in 22.04 seconds
 2. UnrealIRCd 3.2.8.1 Backdoor —https://www.exploit-db.com/exploits/16922
 3. Samba 3.0.20 usermap_script  — https://www.exploit-db.com/exploits/16320
 
---- 
+---
 
 ## Задание 2
 
@@ -227,7 +227,7 @@ _Приведите ответ в свободной форме._
 
 
 
-### ** Как отвечает сервер (Metasploitable/Linux)?**
+### Как отвечает сервер (Metasploitable)
 
 **На SYN:**
 
