@@ -102,7 +102,7 @@
 ---
 
 ## 🔹 10. Системы хранения и передачи данных ✅
-**Модуль завершен. Все задания проверены ментором.*
+*Модуль завершен. Все задания проверены ментором.*
 - [01. Базы данных, их типы](10-Data-storage-and-transmission-systems/01-Databases-and-types) ✅
 - [02. Кеширование Redis/memcached](10-Data-storage-and-transmission-systems/02-Redis-memcached-caching)✅
 - [03. ELK](10-Data-storage-and-transmission-systems/03-ELK)✅
@@ -111,7 +111,7 @@
 ---
 
 ## 🔹 11. Реляционные базы данных и администрирование баз данных ✅
-**Модуль завершен. Все задания проверены ментором.*
+*Модуль завершен. Все задания проверены ментором.*
 - [01. Базы данных](11-Databases/01-Databases) ✅
 - [02. Работа с данными (DDL/DML)](11-Databases/02-DDL_DML) ✅
 - [03. Операции с данными в SQL](11-Databases/03-Data_operations_SQL) ✅
