@@ -129,7 +129,8 @@
 *Модуль находится в разработке. Обновления по мере прохождения курса.*
 
 - [01. Уязвимости и атаки на информационные системы](12-Information_security/01-Vulnerabilities) ✅
-- [02. Защита хоста](12-Information_security/02-Host_protection) 🚧
+- [02. Защита хоста](12-Information_security/02-Host_protection) ✅
+- [03. Защита сети](12-Information_security/03-Network_protection) 🚧
 ---
 
 
