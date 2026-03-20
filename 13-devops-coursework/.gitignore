@@ -1,0 +1,29 @@
+# Terraform
+*.tfstate
+*.tfstate.*
+*.tfplan
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+
+# Ansible
+ansible/vault-password.txt
+ansible/inventories/production/hosts.ini
+*.retry
+ansible/.vault_pass
+
+# Secrets
+*.pem
+*.key
+secrets/
+vault.yml
+
+# OS
+.DS_Store
+Thumbs.db
+*.log
+
+# IDE
+.vscode/
+*.swp
+*.swo
