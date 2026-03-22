@@ -1,0 +1,36 @@
+---
+# =============================================================================
+# MAIN PLAYBOOK - DevOps Coursework
+# =============================================================================
+
+# 1. Базовая настройка и безопасность — для ВСЕХ хостов
+- name: Base configuration for all hosts
+  hosts: all
+  become: true
+  roles:
+    - base
+    - security
+
+# 2. Web-серверы (Nginx + Filebeat)
+- name: Configure Web Servers
+  hosts: webservers
+  become: true
+  roles:
+    - nginx
+    - filebeat
+
+# 3. Monitoring (Prometheus + Grafana)
+- name: Configure Monitoring
+  hosts: monitoring
+  become: true
+  roles:
+    - prometheus
+    - grafana
+
+# 4. Logging (Elasticsearch + Kibana)
+- name: Configure Logging
+  hosts: logging
+  become: true
+  roles:
+    - elasticsearch
+    - kibana
