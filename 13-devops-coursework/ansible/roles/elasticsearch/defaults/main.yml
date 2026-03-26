@@ -1,0 +1,32 @@
+---
+# =============================================================================
+# Elasticsearch Default Variables - Version 9.3.2
+# =============================================================================
+
+# Cluster configuration
+es_cluster_name: devops-coursework
+es_node_name: "{{ inventory_hostname }}"
+
+# Network settings
+es_network_host: 0.0.0.0
+es_http_port: 9200
+es_transport_port: 9300
+
+# Discovery (single-node mode for coursework)
+es_discovery_type: single-node
+
+# Security
+es_xpack_security_enabled: false
+es_xpack_security_enrollment_enabled: false
+
+# CORS settings (для Kibana)
+es_cors_enabled: true
+es_cors_allow_origin: "*"
+
+# Memory settings
+es_heap_size_min: 512m
+es_heap_size_max: 512m
+
+# Paths
+es_path_data: /var/lib/elasticsearch
+es_path_logs: /var/log/elasticsearch

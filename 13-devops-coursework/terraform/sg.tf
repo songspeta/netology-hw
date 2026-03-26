@@ -3,13 +3,13 @@
 # =============================================================================
 
 # --- Bastion Security Group ---
-# Доступ ТОЛЬКО с твоего IP
+# Доступ ТОЛЬКО с одного IP
 resource "yandex_vpc_security_group" "bastion" {
   name        = "${var.resource_prefix}-bastion-sg"
   description = "Security group for Bastion host"
   network_id  = yandex_vpc_network.main.id
 
-  # Входящий: SSH только с твоего IP
+  # Входящий: SSH только с одного IP
   ingress {
     description    = "SSH from admin"
     protocol       = "TCP"
@@ -110,6 +110,14 @@ resource "yandex_vpc_security_group" "logging" {
   network_id  = yandex_vpc_network.main.id
 
   # Входящий: Elasticsearch (9200-9300) от Web и Monitoring SG
+
+    ingress {
+    description       = "Elasticsearch from Logging group (Kibana)"
+    protocol          = "TCP"
+    from_port         = 9200
+    to_port           = 9300
+    predefined_target = "self_security_group"
+  }
   ingress {
     description       = "Elasticsearch from Web"
     protocol          = "TCP"
@@ -167,7 +175,7 @@ resource "yandex_vpc_security_group" "alb" {
     v4_cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Входящий: HTTPS от всех (если будем использовать SSL)
+  # Входящий: HTTPS от всех
   ingress {
     description    = "HTTPS from internet"
     protocol       = "TCP"

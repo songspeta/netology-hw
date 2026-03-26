@@ -1,0 +1,10 @@
+---
+# Переменные для шаблона (можно переопределить в inventory)
+grafana_public_ip: "{{ hostvars['grafana']['ansible_host'] | default('') }}"
+kibana_public_ip: "{{ hostvars['kibana']['ansible_host'] | default('') }}"
+alb_public_ip: "{{ hostvars['alb-lb']['ansible_host'] | default('') }}"
+
+# Пути
+nginx_web_root: /var/www/html
+nginx_log_dir: /var/log/nginx
+submission_log: /var/log/submissions.log

@@ -1,0 +1,22 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  tags: [base, packages]
+
+- name: Install common utilities
+  apt:
+    name:
+      - curl
+      - wget
+      - htop
+      - net-tools
+      - unzip
+      - jq
+      - software-properties-common
+      - apt-transport-https
+      - ca-certificates
+      - gnupg
+    state: present
+  tags: [base, packages]

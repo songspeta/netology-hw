@@ -1,0 +1,18 @@
+---
+# Filebeat Default Variables - Version 9.3.2
+
+filebeat_version: "9.3.2"
+filebeat_package: "filebeat-{{ filebeat_version }}-amd64.deb"
+
+# Elasticsearch connection
+elasticsearch_hosts:
+  - "{{ hostvars['elasticsearch']['ansible_host'] }}:9200"
+
+# Log paths
+filebeat_log_paths:
+  - /var/log/submissions.log
+  - /var/log/nginx/*.log
+
+# Log retention
+filebeat_logging_level: warning
+filebeat_logging_keepfiles: 7

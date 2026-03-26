@@ -10,6 +10,11 @@ ansible_user=${ssh_user}
 ansible_ssh_private_key_file=~/.ssh/terr
 ansible_python_interpreter=/usr/bin/python3
 
+# Public IPs для ссылок
+grafana_public_ip=${grafana_public_ip}
+kibana_public_ip=${kibana_public_ip}
+alb_public_ip=${alb_public_ip}
+
 # =============================================================================
 # BASTION HOST
 # =============================================================================
@@ -20,8 +25,8 @@ bastion ansible_host=${bastion_public_ip}
 # WEB SERVERS (Nginx)
 # =============================================================================
 [webservers]
-web-a-1 ansible_host=${web_a_private_ip}
-web-b-1 ansible_host=${web_b_private_ip}
+web-a-1 ansible_host=${web_a_private_ip} yc_zone=${web_a_zone}
+web-b-1 ansible_host=${web_b_private_ip} yc_zone=${web_b_zone}
 
 [webservers:vars]
 ansible_ssh_common_args='-o ProxyJump=${ssh_user}@${bastion_public_ip}'
@@ -31,14 +36,14 @@ ansible_ssh_common_args='-o ProxyJump=${ssh_user}@${bastion_public_ip}'
 # =============================================================================
 [monitoring]
 prometheus ansible_host=${prometheus_private_ip} ansible_ssh_common_args='-o ProxyJump=${ssh_user}@${bastion_public_ip}'
-grafana ansible_host=${grafana_public_ip}
+grafana ansible_host=${grafana_private_ip} ansible_ssh_common_args='-o ProxyJump=${ssh_user}@${bastion_public_ip}'
 
 # =============================================================================
 # LOGGING (Elasticsearch + Kibana)
 # =============================================================================
 [logging]
 elasticsearch ansible_host=${elasticsearch_private_ip} ansible_ssh_common_args='-o ProxyJump=${ssh_user}@${bastion_public_ip}'
-kibana ansible_host=${kibana_public_ip}
+kibana ansible_host=${kibana_private_ip} ansible_ssh_common_args='-o ProxyJump=${ssh_user}@${bastion_public_ip}'
 
 # =============================================================================
 # ALL PRIVATE HOSTS (через Bastion)
@@ -53,11 +58,3 @@ logging
 # =============================================================================
 [public_hosts]
 bastion
-grafana
-kibana
-
-# =============================================================================
-# LOAD BALANCER
-# =============================================================================
-[alb]
-alb ansible_host=${alb_public_ip}

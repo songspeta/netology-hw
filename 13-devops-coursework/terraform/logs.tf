@@ -23,13 +23,13 @@ resource "yandex_compute_instance" "elasticsearch" {
     initialize_params {
       image_id = data.yandex_compute_image.ubuntu.id
       type     = "network-ssd"
-      size     = 30  # Больше диск для хранения логов
+      size     = 30
     }
   }
 
   network_interface {
     subnet_id          = yandex_vpc_subnet.private_b.id
-    nat                = false  # ❌ Нет публичного IP (приватная подсеть)
+    nat                = false
     security_group_ids = [yandex_vpc_security_group.logging.id]
   }
 
@@ -38,7 +38,7 @@ resource "yandex_compute_instance" "elasticsearch" {
   }
 
   scheduling_policy {
-    preemptible = true  # ✅ Прерываемая ВМ (экономия)
+    preemptible = true
   }
 
   allow_stopping_for_update = true
@@ -55,7 +55,7 @@ resource "yandex_compute_instance" "kibana" {
 
   resources {
     cores         = 2
-    memory        = 2
+    memory        = 4
     core_fraction = 20
   }
 
@@ -69,7 +69,7 @@ resource "yandex_compute_instance" "kibana" {
 
   network_interface {
     subnet_id          = yandex_vpc_subnet.public_b.id
-    nat                = true  # ✅ Есть публичный IP (публичная подсеть)
+    nat                = true
     security_group_ids = [yandex_vpc_security_group.logging.id]
   }
 
@@ -78,7 +78,7 @@ resource "yandex_compute_instance" "kibana" {
   }
 
   scheduling_policy {
-    preemptible = true  # ✅ Прерываемая ВМ (экономия)
+    preemptible = true
   }
 
   allow_stopping_for_update = true

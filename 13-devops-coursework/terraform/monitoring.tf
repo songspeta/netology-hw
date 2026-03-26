@@ -23,13 +23,13 @@ resource "yandex_compute_instance" "prometheus" {
     initialize_params {
       image_id = data.yandex_compute_image.ubuntu.id
       type     = "network-ssd"
-      size     = 20  # Больше диск для хранения метрик
+      size     = 20
     }
   }
 
   network_interface {
     subnet_id          = yandex_vpc_subnet.private_a.id
-    nat                = false  # ❌ Нет публичного IP (приватная подсеть)
+    nat                = false
     security_group_ids = [yandex_vpc_security_group.monitoring.id]
   }
 
@@ -38,7 +38,7 @@ resource "yandex_compute_instance" "prometheus" {
   }
 
   scheduling_policy {
-    preemptible = true  # ✅ Прерываемая ВМ (экономия)
+    preemptible = true
   }
 
   allow_stopping_for_update = true
@@ -69,7 +69,7 @@ resource "yandex_compute_instance" "grafana" {
 
   network_interface {
     subnet_id          = yandex_vpc_subnet.public_a.id
-    nat                = true  # ✅ Есть публичный IP (публичная подсеть)
+    nat                = true
     security_group_ids = [yandex_vpc_security_group.monitoring.id]
   }
 
@@ -78,7 +78,7 @@ resource "yandex_compute_instance" "grafana" {
   }
 
   scheduling_policy {
-    preemptible = true  # ✅ Прерываемая ВМ (экономия)
+    preemptible = true
   }
 
   allow_stopping_for_update = true

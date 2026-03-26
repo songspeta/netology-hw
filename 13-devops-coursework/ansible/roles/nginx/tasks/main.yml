@@ -1,0 +1,240 @@
+---
+# =============================================================================
+# ROLE: NGINX
+# Описание: Установка и настройка веб-сервера Nginx + PHP + API
+# Применимо к: webservers
+# =============================================================================
+
+- name: Install Nginx and PHP-FPM
+  apt:
+    name:
+      - nginx
+      - php-fpm
+      - php-cli
+      - php-json
+      - php-curl
+    state: present
+    update_cache: yes
+  tags: [nginx, packages]
+
+- name: Create log file for submissions
+  file:
+    path: "{{ submission_log | default('/var/log/submissions.log') }}"
+    state: touch
+    mode: '0644'
+    owner: www-data
+    group: www-data
+  tags: [nginx, config]
+
+- name: Deploy index.html from Jinja2 template
+  template:
+    src: index.html.j2
+    dest: "{{ nginx_web_root | default('/var/www/html') }}/index.html"
+    mode: '0644'
+    owner: www-data
+    group: www-data
+  notify: Reload Nginx
+  tags: [nginx, config]
+
+- name: Create API directory
+  file:
+    path: "{{ nginx_web_root | default('/var/www/html') }}/api"
+    state: directory
+    mode: '0755'
+    owner: www-data
+    group: www-data
+  tags: [nginx, config]
+
+- name: Deploy submit.php API endpoint
+  copy:
+    content: |
+      <?php
+      // /var/www/html/api/submit.php
+      header('Content-Type: application/json');
+      header("X-Served-By: " . trim(shell_exec('hostname')));
+
+      // CORS headers for browser
+      header('Access-Control-Allow-Origin: *');
+      header('Access-Control-Expose-Headers: X-Served-By');
+      header('Access-Control-Allow-Methods: POST, GET, OPTIONS');
+      header('Access-Control-Allow-Headers: Content-Type');
+
+      // Handle preflight OPTIONS request
+      if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+          http_response_code(200);
+          exit;
+      }
+
+      $logFile = '/var/log/submissions.log';
+      $input = json_decode(file_get_contents('php://input'), true);
+      $event = $input['event'] ?? 'form_submit';
+      $timestamp = date('Y-m-d H:i:s');
+      $hostname = trim(shell_exec('hostname'));
+      $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+
+      $logEntry = sprintf("%s | %s | %s | %s\n", $timestamp, $hostname, $ip, $event);
+      file_put_contents($logFile, $logEntry, FILE_APPEND | LOCK_EX);
+
+      http_response_code(200);
+      echo json_encode(['status' => 'ok', 'message' => 'Logged']);
+      ?>
+    dest: "{{ nginx_web_root | default('/var/www/html') }}/api/submit.php"
+    mode: '0644'
+    owner: www-data
+    group: www-data
+  notify: Reload Nginx
+  tags: [nginx, api]
+
+- name: Deploy whoami.php API endpoint
+  copy:
+    content: |
+      <?php
+      // /var/www/html/api/whoami.php
+      header('Content-Type: application/json');
+      header("X-Served-By: " . trim(shell_exec('hostname')));
+
+      // CORS headers
+      header('Access-Control-Allow-Origin: *');
+      header('Access-Control-Expose-Headers: X-Served-By');
+
+      echo json_encode([
+          'hostname' => trim(shell_exec('hostname')),
+          'ip' => $_SERVER['SERVER_ADDR'] ?? 'unknown',
+          'timestamp' => date('c')
+      ]);
+      ?>
+    dest: "{{ nginx_web_root | default('/var/www/html') }}/api/whoami.php"
+    mode: '0644'
+    owner: www-data
+    group: www-data
+  notify: Reload Nginx
+  tags: [nginx, api]
+
+- name: Deploy logs.php API endpoint
+  copy:
+    content: |
+      <?php
+      // /var/www/html/api/logs.php
+      header('Content-Type: application/json');
+
+      // CORS headers
+      header('Access-Control-Allow-Origin: *');
+      header('Access-Control-Expose-Headers: X-Served-By');
+
+      $logFile = '/var/log/submissions.log';
+      $lines = isset($_GET['count']) ? (int)$_GET['count'] : 10;
+
+      if (!file_exists($logFile)) {
+          echo json_encode([]);
+          exit;
+      }
+
+      $logs = [];
+      $handle = fopen($logFile, 'r');
+      if ($handle) {
+          while (($line = fgets($handle)) !== false) {
+              $parts = explode(' | ', trim($line));
+              if (count($parts) >= 4) {
+                  $logs[] = [
+                      'time' => $parts[0],
+                      'server' => $parts[1],
+                      'ip' => $parts[2],
+                      'event' => $parts[3]
+                  ];
+              }
+          }
+          fclose($handle);
+      }
+
+      echo json_encode(array_slice(array_reverse($logs), 0, $lines));
+      ?>
+    dest: "{{ nginx_web_root | default('/var/www/html') }}/api/logs.php"
+    mode: '0644'
+    owner: www-data
+    group: www-data
+  notify: Reload Nginx
+  tags: [nginx, api]
+
+- name: Configure Nginx with PHP and CORS
+  copy:
+    dest: /etc/nginx/sites-available/default
+    content: |
+      server {
+          listen 80 default_server;
+          listen [::]:80 default_server;
+
+          root {{ nginx_web_root | default('/var/www/html') }};
+          index index.html index.php index.htm;
+
+          server_name _;
+
+          # CORS headers on server level (apply to all locations)
+          add_header Access-Control-Allow-Origin * always;
+          add_header Access-Control-Expose-Headers X-Served-By always;
+          add_header Access-Control-Allow-Methods "GET, POST, OPTIONS" always;
+          add_header Access-Control-Allow-Headers "Content-Type" always;
+
+          # Root location
+          location / {
+              # Handle preflight OPTIONS requests
+              if ($request_method = OPTIONS) {
+                  add_header Access-Control-Allow-Origin *;
+                  add_header Access-Control-Allow-Methods "GET, POST, OPTIONS";
+                  add_header Access-Control-Allow-Headers "Content-Type";
+                  add_header Content-Length 0;
+                  add_header Content-Type text/plain;
+                  return 204;
+              }
+
+              try_files $uri $uri/ =404;
+          }
+
+          # PHP Files - CORS headers inherited from server level
+          location ~ \.php$ {
+              # Add CORS headers explicitly for PHP
+              add_header Access-Control-Allow-Origin * always;
+              add_header Access-Control-Expose-Headers X-Served-By always;
+              add_header Access-Control-Allow-Methods "GET, POST, OPTIONS" always;
+              add_header Access-Control-Allow-Headers "Content-Type" always;
+
+              include snippets/fastcgi-php.conf;
+              fastcgi_pass unix:/run/php/php8.3-fpm.sock;
+              fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+              include fastcgi_params;
+          }
+
+          # Health check endpoint for ALB
+          location = /health {
+              access_log off;
+              return 200 "OK\n";
+              add_header Content-Type text/plain;
+          }
+
+          # Add server header for debugging
+          add_header X-Served-By $hostname;
+      }
+    mode: '0644'
+    backup: yes
+  notify: Reload Nginx
+  tags: [nginx, config]
+
+- name: Ensure Nginx is running and enabled
+  systemd:
+    name: nginx
+    state: started
+    enabled: yes
+  tags: [nginx, service]
+
+- name: Ensure PHP-FPM is running and enabled
+  systemd:
+    name: php8.3-fpm
+    state: started
+    enabled: yes
+  tags: [nginx, service]
+
+- name: Test Nginx configuration
+  command: nginx -t
+  register: nginx_test
+  changed_when: false
+  failed_when: nginx_test.rc != 0
+  tags: [nginx, config]

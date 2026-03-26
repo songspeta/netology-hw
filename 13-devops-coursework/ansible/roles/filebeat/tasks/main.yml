@@ -1,0 +1,79 @@
+---
+- name: Check if Filebeat is already installed
+  command: dpkg -l filebeat
+  register: filebeat_installed
+  failed_when: false
+  changed_when: false
+  tags: [filebeat, packages]
+
+- name: Copy Filebeat .deb package to remote host
+  copy:
+    src: "{{ filebeat_package }}"
+    dest: "/tmp/{{ filebeat_package }}"
+    mode: '0644'
+  when: filebeat_installed.rc != 0
+  tags: [filebeat, packages]
+
+- name: Install Filebeat from local .deb package
+  apt:
+    deb: "/tmp/{{ filebeat_package }}"
+    state: present
+  when: filebeat_installed.rc != 0
+  tags: [filebeat, packages]
+
+- name: Deploy Filebeat configuration
+  template:
+    src: filebeat.yml.j2
+    dest: /etc/filebeat/filebeat.yml
+    mode: '0644'
+    backup: yes
+  notify: Restart Filebeat
+  tags: [filebeat, config]
+
+- name: Test Filebeat configuration
+  command: filebeat test config -c /etc/filebeat/filebeat.yml
+  register: filebeat_config_test
+  changed_when: false
+  tags: [filebeat, config]
+
+- name: Display config test result
+  debug:
+    var: filebeat_config_test.stdout_lines
+  tags: [filebeat, config]
+
+- name: Ensure Filebeat is started and enabled
+  systemd:
+    name: filebeat
+    state: started
+    enabled: yes
+    daemon_reload: yes
+  tags: [filebeat, service]
+
+- name: Wait for Filebeat to start
+  pause:
+    seconds: 10
+  tags: [filebeat, service]
+
+- name: Check Filebeat status
+  command: systemctl is-active filebeat
+  register: filebeat_status
+  changed_when: false
+  failed_when: false
+  tags: [filebeat, service]
+
+- name: Display Filebeat status
+  debug:
+    msg: "Filebeat is {{ filebeat_status.stdout }}"
+  tags: [filebeat, service]
+
+- name: Show Filebeat logs if failed
+  shell: journalctl -u filebeat -n 20 --no-pager
+  when: filebeat_status.stdout != 'active'
+  register: filebeat_logs
+  tags: [filebeat, debug]
+
+- name: Display Filebeat error logs
+  debug:
+    var: filebeat_logs.stdout_lines
+  when: filebeat_status.stdout != 'active'
+  tags: [filebeat, debug]

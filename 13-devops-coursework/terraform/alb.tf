@@ -2,12 +2,11 @@
 # APPLICATION LOAD BALANCER (ALB)
 # =============================================================================
 
-# --- 1. Target Group (автоматически все web серверы) ---
+# --- 1. Target Group ---
 resource "yandex_alb_target_group" "web" {
   name      = "${var.resource_prefix}-web-tg"
   folder_id = var.folder_id
 
-  # Автоматически добавляем все веб-серверы из коллекции
   dynamic "target" {
     for_each = yandex_compute_instance.web
     content {
@@ -33,7 +32,7 @@ resource "yandex_alb_backend_group" "web" {
       interval            = "5s"
       unhealthy_threshold = 2
       healthy_threshold   = 2
-      
+
       http_healthcheck {
         path = "/"
       }
@@ -54,7 +53,7 @@ resource "yandex_alb_virtual_host" "web" {
 
   route {
     name = "web-route"
-    
+
     http_route {
       http_route_action {
         backend_group_id = yandex_alb_backend_group.web.id

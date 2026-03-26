@@ -27,3 +27,6 @@ Thumbs.db
 .vscode/
 *.swp
 *.swo
+
+*.deb
+devops-coursework.conf

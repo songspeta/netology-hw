@@ -1,0 +1,83 @@
+---
+# =============================================================================
+# ROLE: KIBANA
+# Описание: Установка Kibana 9.3.2 для визуализации логов
+# Применимо к: kibana (конкретный хост)
+# Подключается к: Elasticsearch на хосте 'elasticsearch'
+# =============================================================================
+
+- name: Install Java 17 (required for Kibana)
+  apt:
+    name:
+      - openjdk-17-jdk
+      - openjdk-17-jre
+    state: present
+  tags: [kibana, packages]
+
+- name: Check if Kibana is already installed
+  command: dpkg -l kibana
+  register: kibana_installed
+  failed_when: false
+  changed_when: false
+  tags: [kibana, packages]
+
+- name: Copy Kibana .deb package to remote host
+  copy:
+    src: kibana-9.3.2-amd64.deb
+    dest: /tmp/kibana-9.3.2-amd64.deb
+    mode: '0644'
+  when: kibana_installed.rc != 0
+  tags: [kibana, packages]
+
+- name: Install Kibana from local .deb package
+  apt:
+    deb: /tmp/kibana-9.3.2-amd64.deb
+    state: present
+  when: kibana_installed.rc != 0
+  tags: [kibana, packages]
+
+- name: Deploy Kibana configuration
+  template:
+    src: kibana.yml.j2
+    dest: /etc/kibana/kibana.yml
+    mode: '0644'
+    owner: root
+    group: kibana
+  notify: Restart Kibana
+  tags: [kibana, config]
+
+- name: Ensure Kibana is started and enabled
+  systemd:
+    name: kibana
+    state: started
+    enabled: yes
+    daemon_reload: yes
+  tags: [kibana, service]
+
+- name: Wait for Kibana HTTP port to be ready
+  wait_for:
+    port: 5601
+    host: 0.0.0.0
+    delay: 10
+    timeout: 120
+  tags: [kibana, service]
+
+- name: Check Kibana status
+  uri:
+    url: "http://localhost:5601/api/status"
+    method: GET
+    return_content: yes
+    status_code: 200
+  register: kibana_status
+  retries: 10
+  delay: 5
+  ignore_errors: true
+  tags: [kibana, service]
+
+- name: Display Kibana info
+  debug:
+    msg: |
+      Kibana is ready!
+      URL: http://{{ hostvars['kibana']['ansible_host'] }}:5601
+      Status: {{ kibana_status.json.version.number | default('unknown') }}
+  tags: [kibana, service]
