@@ -175,6 +175,27 @@
   notify: Reload Nginx
   tags: [nginx, config]
 
+- name: Enable Nginx stub_status for metrics
+  copy:
+    content: |
+      server {
+          listen 127.0.0.1:8080;
+          server_name localhost;
+
+          location /stub_status {
+              stub_status;
+              allow 127.0.0.1;
+              allow 10.0.0.0/8;
+              deny all;
+          }
+      }
+    dest: /etc/nginx/conf.d/metrics.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Reload Nginx
+  tags: [nginx, config]
+
 - name: Ensure Nginx is running and enabled
   systemd:
     name: nginx
@@ -195,3 +216,4 @@
   changed_when: false
   failed_when: nginx_test.rc != 0
   tags: [nginx, config]
+

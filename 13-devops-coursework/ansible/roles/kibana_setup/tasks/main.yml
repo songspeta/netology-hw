@@ -15,11 +15,6 @@
   until: kibana_status.status == 200
   tags: [kibana_setup, wait]
 
-- name: Display Kibana version
-  debug:
-    msg: "Kibana {{ kibana_status.json.version.number }} is ready at {{ kibana_api_url }}"
-  tags: [kibana_setup]
-
 # =============================================================================
 # Data Views
 # =============================================================================

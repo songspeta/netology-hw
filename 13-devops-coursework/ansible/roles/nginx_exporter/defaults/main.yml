@@ -1,0 +1,8 @@
+---
+nginx_exporter_version: "1.5.1"
+nginx_exporter_user: nginx_exporter
+nginx_exporter_group: nginx_exporter
+nginx_exporter_install_dir: /usr/local/bin
+nginx_exporter_port: 9113
+nginx_exporter_listen_address: "0.0.0.0"
+nginx_exporter_scrape_uri: "http://127.0.0.1:8080/stub_status"

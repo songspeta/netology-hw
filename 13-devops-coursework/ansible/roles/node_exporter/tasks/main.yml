@@ -1,0 +1,65 @@
+---
+- name: Create Node Exporter group
+  group:
+    name: "{{ node_exporter_group }}"
+    state: present
+    system: yes
+  tags: [node_exporter]
+
+- name: Create Node Exporter user
+  user:
+    name: "{{ node_exporter_user }}"
+    group: "{{ node_exporter_group }}"
+    system: yes
+    shell: /usr/sbin/nologin
+    create_home: no
+  tags: [node_exporter]
+
+- name: Download Node Exporter
+  get_url:
+    url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+    dest: "/tmp/node_exporter-{{ node_exporter_version }}.tar.gz"
+    mode: '0644'
+  register: node_exporter_download
+  tags: [node_exporter]
+
+- name: Extract Node Exporter
+  unarchive:
+    src: "/tmp/node_exporter-{{ node_exporter_version }}.tar.gz"
+    dest: "{{ node_exporter_install_dir }}"
+    remote_src: yes
+    extra_opts: [--strip-components=1]
+    creates: "{{ node_exporter_install_dir }}/node_exporter"
+  tags: [node_exporter]
+
+- name: Create systemd service for Node Exporter
+  copy:
+    content: |
+      [Unit]
+      Description=Node Exporter
+      Documentation=https://prometheus.io/docs/guides/node-exporter/
+      After=network-online.target
+
+      [Service]
+      User={{ node_exporter_user }}
+      Group={{ node_exporter_group }}
+      Type=simple
+      ExecStart={{ node_exporter_install_dir }}/node_exporter \
+        --web.listen-address={{ node_exporter_listen_address }}:{{ node_exporter_port }}
+      Restart=always
+      RestartSec=5
+
+      [Install]
+      WantedBy=multi-user.target
+    dest: /etc/systemd/system/node_exporter.service
+    mode: '0644'
+  notify: Restart Node Exporter
+  tags: [node_exporter]
+
+- name: Enable and start Node Exporter
+  systemd:
+    name: node_exporter
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  tags: [node_exporter]

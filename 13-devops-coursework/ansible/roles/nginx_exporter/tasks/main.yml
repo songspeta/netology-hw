@@ -1,0 +1,63 @@
+---
+- name: Create Nginx Exporter group
+  group:
+    name: "{{ nginx_exporter_group }}"
+    state: present
+    system: yes
+  tags: [nginx_exporter]
+
+- name: Create Nginx Exporter user
+  user:
+    name: "{{ nginx_exporter_user }}"
+    group: "{{ nginx_exporter_group }}"
+    system: yes
+    shell: /usr/sbin/nologin
+    create_home: no
+  tags: [nginx_exporter]
+
+- name: Download Nginx Exporter
+  get_url:
+    url: "https://github.com/nginxinc/nginx-prometheus-exporter/releases/download/v{{ nginx_exporter_version }}/nginx-prometheus-exporter_{{ nginx_exporter_version }}_linux_amd64.tar.gz"
+    dest: "/tmp/nginx_exporter.tar.gz"
+    mode: '0644'
+  tags: [nginx_exporter]
+
+- name: Extract Nginx Exporter using tar command
+  command: >
+    tar -xzf /tmp/nginx_exporter.tar.gz
+    -C {{ nginx_exporter_install_dir }}
+    --no-same-owner
+  args:
+    creates: "{{ nginx_exporter_install_dir }}/nginx-prometheus-exporter"
+  tags: [nginx_exporter]
+
+- name: Create systemd service for Nginx Exporter
+  copy:
+    content: |
+      [Unit]
+      Description=Nginx Prometheus Exporter
+      After=network.target nginx.service
+
+      [Service]
+      User={{ nginx_exporter_user }}
+      Group={{ nginx_exporter_group }}
+      Type=simple
+      ExecStart={{ nginx_exporter_install_dir }}/nginx-prometheus-exporter \
+        -web.listen-address={{ nginx_exporter_listen_address }}:{{ nginx_exporter_port }} \
+        -nginx.scrape-uri={{ nginx_exporter_scrape_uri }}
+      Restart=always
+
+      [Install]
+      WantedBy=multi-user.target
+    dest: /etc/systemd/system/nginx_exporter.service
+    mode: '0644'
+  notify: Restart Nginx Exporter
+  tags: [nginx_exporter]
+
+- name: Enable and start Nginx Exporter
+  systemd:
+    name: nginx_exporter
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  tags: [nginx_exporter]

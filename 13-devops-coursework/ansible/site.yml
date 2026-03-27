@@ -10,12 +10,15 @@
   roles:
     - base
     - security
+    - node_exporter
+
 
 # 2. Web Servers (Nginx + Filebeat)
 - name: Configure Web Servers
   hosts: webservers
   become: true
   roles:
+    - nginx_exporter
     - nginx
     - filebeat
 

@@ -77,3 +77,4 @@
     var: filebeat_logs.stdout_lines
   when: filebeat_status.stdout != 'active'
   tags: [filebeat, debug]
+

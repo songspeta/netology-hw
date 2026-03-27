@@ -34,6 +34,22 @@ resource "yandex_vpc_security_group" "web" {
   description = "Security group for Web servers"
   network_id  = yandex_vpc_network.main.id
 
+ # Входящий: Node Exporter metrics от Prometheus
+  ingress {
+    description       = "Node Exporter metrics from Prometheus"
+    protocol          = "TCP"
+    port              = 9100
+    security_group_id = yandex_vpc_security_group.monitoring.id
+  }
+
+  # Входящий: Nginx Exporter metrics от Prometheus
+  ingress {
+    description       = "Nginx Exporter metrics from Prometheus"
+    protocol          = "TCP"
+    port              = 9113
+    security_group_id = yandex_vpc_security_group.monitoring.id
+  }
+
   # Входящий: HTTP от всех (ALB healthcheck + трафик)
   ingress {
     description    = "HTTP from ALB"
@@ -67,6 +83,13 @@ resource "yandex_vpc_security_group" "monitoring" {
   description = "Security group for Monitoring (Prometheus, Grafana)"
   network_id  = yandex_vpc_network.main.id
 
+# Входящий: Prometheus API/UI (порт 9090) — для Grafana datasource + отладки
+ingress {
+  description       = "Prometheus API from monitoring group"
+  protocol          = "TCP"
+  port              = 9090
+  predefined_target = "self_security_group"  # ← только внутри monitoring SG
+}
   # Входящий: Prometheus scrapes (9100-9113) от самой группы
   ingress {
     description       = "Prometheus scrapes"
@@ -108,6 +131,15 @@ resource "yandex_vpc_security_group" "logging" {
   name        = "${var.resource_prefix}-logging-sg"
   description = "Security group for Logging (Elasticsearch, Kibana)"
   network_id  = yandex_vpc_network.main.id
+
+# Входящий: Node Exporter metrics от Prometheus
+  ingress {
+    description       = "Node Exporter metrics from Prometheus"
+    protocol          = "TCP"
+    port              = 9100
+    security_group_id = yandex_vpc_security_group.monitoring.id
+  }
+
 
   # Входящий: Elasticsearch (9200-9300) от Web и Monitoring SG
 

@@ -11,7 +11,7 @@ filebeat.config.modules:
 
 # ------------------------ Filestream Inputs (Filebeat 9.x) ----
 filebeat.inputs:
-  # Application submissions log
+  # Application submissions log (web servers only)
   - type: filestream
     enabled: true
     id: web-submissions
@@ -33,7 +33,7 @@ filebeat.inputs:
     multiline.match: after
     multiline.negate: false
 
-  # Nginx access log
+  # Nginx access log (web servers only)
   - type: filestream
     enabled: true
     id: nginx-access
@@ -49,7 +49,7 @@ filebeat.inputs:
       host: {{ inventory_hostname }}
     fields_under_root: true
 
-  # Nginx error log
+  # Nginx error log (web servers only)
   - type: filestream
     enabled: true
     id: nginx-error
@@ -65,7 +65,7 @@ filebeat.inputs:
       host: {{ inventory_hostname }}
     fields_under_root: true
 
-    # Elasticsearch-logs
+  # Elasticsearch logs (elasticsearch host only)
   - type: filestream
     enabled: true
     id: elasticsearch-logs
@@ -81,7 +81,25 @@ filebeat.inputs:
       host: {{ inventory_hostname }}
     fields_under_root: true
 
-  # Kibana logs
+  # Prometheus logs (ТОЛЬКО на prometheus хосте)
+{% if inventory_hostname == 'prometheus' %}
+  - type: filestream
+    enabled: true
+    id: prometheus-logs
+    paths:
+      - {{ prometheus_log_dir }}/prometheus.log
+    prospector.scanner.fingerprint.enabled: false
+    file_identity:
+      native: ~
+    fields:
+      service: prometheus
+      environment: production
+      host: {{ inventory_hostname }}
+    fields_under_root: true
+{% endif %}
+
+  # Kibana logs (ТОЛЬКО на kibana хосте)
+{% if inventory_hostname == 'kibana' %}
   - type: filestream
     enabled: true
     id: kibana-logs
@@ -95,23 +113,10 @@ filebeat.inputs:
       environment: production
       host: {{ inventory_hostname }}
     fields_under_root: true
+{% endif %}
 
-  # Prometheus logs
-  - type: filestream
-    enabled: true
-    id: prometheus-logs
-    paths:
-      - /var/log/prometheus/prometheus.log
-    prospector.scanner.fingerprint.enabled: false
-    file_identity:
-      native: ~
-    fields:
-      service: prometheus
-      environment: production
-      host: {{ inventory_hostname }}
-    fields_under_root: true
-
-  # Grafana logs
+  # Grafana logs (ТОЛЬКО на grafana хосте)
+{% if inventory_hostname == 'grafana' %}
   - type: filestream
     enabled: true
     id: grafana-logs
@@ -125,6 +130,7 @@ filebeat.inputs:
       environment: production
       host: {{ inventory_hostname }}
     fields_under_root: true
+{% endif %}
 
 
 # ------------------------ Elasticsearch Output ------------------
