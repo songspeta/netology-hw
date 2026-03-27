@@ -10,7 +10,6 @@ cluster.name: {{ es_cluster_name }}
 # ------------------------ Node ------------------------------
 node.name: {{ es_node_name }}
 
-# НОВОЕ В 9.x: используем node.roles вместо node.master и node.data
 node.roles: [ master, data ]
 
 # ------------------------ Paths -----------------------------

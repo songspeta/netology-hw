@@ -110,50 +110,7 @@
   notify: Reload Nginx
   tags: [nginx, api]
 
-- name: Deploy logs.php API endpoint
-  copy:
-    content: |
-      <?php
-      // /var/www/html/api/logs.php
-      header('Content-Type: application/json');
 
-      // CORS headers
-      header('Access-Control-Allow-Origin: *');
-      header('Access-Control-Expose-Headers: X-Served-By');
-
-      $logFile = '/var/log/submissions.log';
-      $lines = isset($_GET['count']) ? (int)$_GET['count'] : 10;
-
-      if (!file_exists($logFile)) {
-          echo json_encode([]);
-          exit;
-      }
-
-      $logs = [];
-      $handle = fopen($logFile, 'r');
-      if ($handle) {
-          while (($line = fgets($handle)) !== false) {
-              $parts = explode(' | ', trim($line));
-              if (count($parts) >= 4) {
-                  $logs[] = [
-                      'time' => $parts[0],
-                      'server' => $parts[1],
-                      'ip' => $parts[2],
-                      'event' => $parts[3]
-                  ];
-              }
-          }
-          fclose($handle);
-      }
-
-      echo json_encode(array_slice(array_reverse($logs), 0, $lines));
-      ?>
-    dest: "{{ nginx_web_root | default('/var/www/html') }}/api/logs.php"
-    mode: '0644'
-    owner: www-data
-    group: www-data
-  notify: Reload Nginx
-  tags: [nginx, api]
 
 - name: Configure Nginx with PHP and CORS
   copy:

@@ -52,7 +52,7 @@
     - filebeat
 
 # 7. Kibana Setup (Data Views, Dashboards)
-- name: Configure Kibana (Data Views, etc.)
+- name: Configure Kibana (Data Views)
   hosts: kibana
   become: true
   roles:
