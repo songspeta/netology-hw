@@ -1,5 +1,5 @@
 ---
-# Переменные для шаблона (можно переопределить в inventory)
+# Переменные для шаблона
 grafana_public_ip: "{{ hostvars['grafana']['ansible_host'] | default('') }}"
 kibana_public_ip: "{{ hostvars['kibana']['ansible_host'] | default('') }}"
 alb_public_ip: "{{ hostvars['alb-lb']['ansible_host'] | default('') }}"

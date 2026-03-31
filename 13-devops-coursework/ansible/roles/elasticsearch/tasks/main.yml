@@ -2,8 +2,7 @@
 # =============================================================================
 # ROLE: ELASTICSEARCH
 # Описание: Установка Elasticsearch 9.3.2 из локального .deb пакета
-# Применимо к: elasticsearch (конкретный хост)
-# Пакет: roles/elasticsearch/files/elasticsearch-9.3.2-amd64.deb
+# Применимо к: elasticsearch
 # =============================================================================
 
 - name: Install Java 17 (required for Elasticsearch)
@@ -51,9 +50,9 @@
   copy:
     dest: /etc/elasticsearch/jvm.options.d/custom.options
     content: |
-      ## Heap size
-      -Xms512m
-      -Xmx512m
+      ## Heap size (from Ansible variables)
+      -Xms{{ es_heap_size_min }}
+      -Xmx{{ es_heap_size_max }}
     mode: '0644'
     owner: root
     group: elasticsearch
@@ -76,15 +75,6 @@
     mode: '0755'
     owner: elasticsearch
     group: elasticsearch
-  tags: [elasticsearch, config]
-
-- name: Disable Elasticsearch security
-  lineinfile:
-    path: /etc/elasticsearch/elasticsearch.yml
-    regexp: '^xpack.security.enabled:'
-    line: 'xpack.security.enabled: false'
-    state: present
-  notify: Restart Elasticsearch
   tags: [elasticsearch, config]
 
 - name: Ensure Elasticsearch is started and enabled
@@ -114,12 +104,4 @@
   retries: 20
   delay: 10
   ignore_errors: true
-  tags: [elasticsearch, service]
-
-- name: Display Elasticsearch cluster info
-  debug:
-    msg: |
-      Elasticsearch cluster "{{ es_health.json.cluster_name | default('N/A') }}" is ready!
-      Status: {{ es_health.json.status | default('unknown') }}
-      Nodes: {{ es_health.json.number_of_nodes | default('N/A') }}
   tags: [elasticsearch, service]

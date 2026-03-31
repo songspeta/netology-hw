@@ -65,3 +65,72 @@ variable "web_servers" {
     }
   }
 }
+
+variable "bastion" {
+  type = map(object({
+    zone   = string
+    subnet = string
+  }))
+  default = {
+    bastion-a-1 = {
+      zone   = "ru-central1-a"
+      subnet = "public_a"
+    }
+  }
+}
+
+variable "elasticsearch" {
+  description = "Configuration for Elasticsearch servers"
+  type = map(object({
+    zone   = string
+    subnet = string
+  }))
+  default = {
+    elasticsearch-b-1 = {
+      zone   = "ru-central1-b"
+      subnet = "private_b"
+    }
+  }
+}
+
+variable "kibana" {
+  description = "Configuration for Kibana servers"
+  type = map(object({
+    zone   = string
+    subnet = string
+  }))
+  default = {
+    kibana-b-1 = {
+      zone   = "ru-central1-b"
+      subnet = "public_b"
+    }
+  }
+}
+
+variable "prometheus" {
+  description = "Configuration for Prometheus servers"
+  type = map(object({
+    zone   = string
+    subnet = string
+  }))
+  default = {
+    prometheus-a-1 = {
+      zone   = "ru-central1-a"
+      subnet = "private_a"
+    }
+  }
+}
+
+variable "grafana" {
+  description = "Configuration for Grafana servers"
+  type = map(object({
+    zone   = string
+    subnet = string
+  }))
+  default = {
+    grafana-a-1 = {
+      zone   = "ru-central1-a"
+      subnet = "public_a"
+    }
+  }
+}

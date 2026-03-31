@@ -4,13 +4,14 @@
 # Prometheus — сбор метрик (приватная подсеть, нет публичного IP)
 # Grafana — визуализация метрик (публичная подсеть, есть публичный IP)
 
-# --- Prometheus Server ---
 resource "yandex_compute_instance" "prometheus" {
-  name        = "${var.resource_prefix}-prometheus"
-  description = "Prometheus monitoring server"
-  hostname    = "${var.resource_prefix}-prometheus"
+  for_each = var.prometheus
 
-  zone        = "ru-central1-a"
+  name        = "${var.resource_prefix}-${each.key}"
+  hostname    = "${var.resource_prefix}-${each.key}"
+  description = "Prometheus server ${each.key}"
+
+  zone        = each.value.zone
   platform_id = "standard-v3"
 
   resources {
@@ -28,7 +29,7 @@ resource "yandex_compute_instance" "prometheus" {
   }
 
   network_interface {
-    subnet_id          = yandex_vpc_subnet.private_a.id
+    subnet_id          = each.value.subnet == "private_a" ? yandex_vpc_subnet.private_a.id : yandex_vpc_subnet.private_b.id
     nat                = false
     security_group_ids = [yandex_vpc_security_group.monitoring.id]
   }
@@ -46,11 +47,13 @@ resource "yandex_compute_instance" "prometheus" {
 
 # --- Grafana Server ---
 resource "yandex_compute_instance" "grafana" {
-  name        = "${var.resource_prefix}-grafana"
-  description = "Grafana visualization server"
-  hostname    = "${var.resource_prefix}-grafana"
+  for_each = var.grafana
 
-  zone        = "ru-central1-a"
+  name        = "${var.resource_prefix}-${each.key}"
+  hostname    = "${var.resource_prefix}-${each.key}"
+  description = "Grafana server ${each.key}"
+
+  zone        = each.value.zone
   platform_id = "standard-v3"
 
   resources {
@@ -68,7 +71,7 @@ resource "yandex_compute_instance" "grafana" {
   }
 
   network_interface {
-    subnet_id          = yandex_vpc_subnet.public_a.id
+    subnet_id          = each.value.subnet == "public_a" ? yandex_vpc_subnet.public_a.id : yandex_vpc_subnet.public_b.id
     nat                = true
     security_group_ids = [yandex_vpc_security_group.monitoring.id]
   }

@@ -1,7 +1,13 @@
 ---
+
 - name: Restart Filebeat
   systemd:
     name: filebeat
     state: restarted
     daemon_reload: yes
-  tags: [filebeat, service]
+
+- name: Reload Filebeat
+  systemd:
+    name: filebeat
+    state: reloaded
+    daemon_reload: no

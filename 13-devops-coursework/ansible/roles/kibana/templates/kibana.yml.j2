@@ -10,8 +10,18 @@ server.port: {{ kibana_server_port }}
 server.name: "{{ kibana_server_name }}"
 
 # ------------------------ Elasticsearch ---------------------
-elasticsearch.hosts: {{ elasticsearch_hosts | to_json }}
+# Динамическое получение IP из inventory
+{% set es_ip = hostvars['elasticsearch-b-1']['ansible_host'] | default(elasticsearch_host_default) %}
+elasticsearch.hosts:
+  - "http://{{ es_ip }}:9200"
 
 # ------------------------ Telemetry -------------------------
-telemetry.enabled: false
-telemetry.optIn: false
+telemetry.enabled: {{ kibana_telemetry_enabled | lower }}
+telemetry.optIn: {{ kibana_telemetry_optin | lower }}
+
+# ------------------------ Logging (9.x syntax) --------------
+logging.root.level: {{ kibana_log_level }}
+logging.root.appenders: [file]
+logging.appenders.file.type: file
+logging.appenders.file.fileName: {{ kibana_log_file }}
+logging.appenders.file.layout.type: json

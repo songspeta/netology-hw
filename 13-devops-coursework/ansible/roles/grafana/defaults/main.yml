@@ -1,0 +1,13 @@
+# Grafana package
+grafana_package: "grafana-enterprise_12.4.2_23531306697_linux_amd64.deb"
+
+# Credentials
+grafana_admin_user: "admin"
+grafana_admin_password: "admin"
+
+# Network
+grafana_http_port: 3000
+
+# Prometheus
+prometheus_host: "{{ hostvars['prometheus-a-1']['ansible_host'] }}"
+prometheus_port: 9090

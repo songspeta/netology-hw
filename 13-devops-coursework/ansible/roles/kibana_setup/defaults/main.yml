@@ -1,12 +1,71 @@
----
-# Kibana Setup Defaults
+# =============================================================================
+# KIBANA SETUP - DEFAULT VARIABLES
+# =============================================================================
 
+# -----------------------------------------------------------------------------
+# Kibana Connection
+# -----------------------------------------------------------------------------
+kibana_host: "{{ hostvars['kibana-b-1']['ansible_host'] | default('localhost') }}"
+kibana_port: 5601
+kibana_url: "http://{{ kibana_host }}:{{ kibana_port }}"
+kibana_content_type: "application/json"
+
+# -----------------------------------------------------------------------------
+# Elasticsearch Connection
+# -----------------------------------------------------------------------------
+elasticsearch_host: "{{ hostvars['elasticsearch-b-1']['ansible_host'] | default('localhost') }}"
+elasticsearch_port: 9200
+
+# -----------------------------------------------------------------------------
+# Data Views to Create
+# -----------------------------------------------------------------------------
 kibana_data_views:
-  - id: "applogs-*"
-    title: "applogs-*"
+  - name: "Filebeat - All"
+    id: "filebeat-all"
+    title: "filebeat-*"
     time_field: "@timestamp"
 
-kibana_api_url: "http://127.0.0.1:5601"
-kibana_api_retries: 15
-kibana_api_delay: 10
-kibana_default_data_view: "applogs-*"
+  - name: "Filebeat - Auth"
+    id: "filebeat-auth"
+    title: "filebeat-auth-*"
+    time_field: "@timestamp"
+
+  - name: "Filebeat - Nginx Access"
+    id: "filebeat-nginx-access"
+    title: "filebeat-nginx-access-*"
+    time_field: "@timestamp"
+
+  - name: "Filebeat - Nginx Error"
+    id: "filebeat-nginx-error"
+    title: "filebeat-nginx-error-*"
+    time_field: "@timestamp"
+
+  - name: "Filebeat - Syslog"
+    id: "filebeat-syslog"
+    title: "filebeat-syslog-*"
+    time_field: "@timestamp"
+
+  - name: "Filebeat - Prometheus"
+    id: "filebeat-prometheus"
+    title: "filebeat-prometheus-*"
+    time_field: "@timestamp"
+
+  - name: "Filebeat - Elasticsearch"
+    id: "filebeat-elasticsearch"
+    title: "filebeat-elasticsearch-*"
+    time_field: "@timestamp"
+
+  - name: "Filebeat - Kibana"
+    id: "filebeat-kibana"
+    title: "filebeat-kibana-*"
+    time_field: "@timestamp"
+
+  - name: "Filebeat - Grafana"
+    id: "filebeat-grafana"
+    title: "filebeat-grafana-*"
+    time_field: "@timestamp"
+
+  - name: "Filebeat - Web Submissions"
+    id: "filebeat-web-submissions"
+    title: "filebeat-web-submissions-*"
+    time_field: "@timestamp"

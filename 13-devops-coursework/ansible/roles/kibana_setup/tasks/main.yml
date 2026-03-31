@@ -1,482 +1,56 @@
 ---
 # =============================================================================
-# Kibana Setup Tasks
+# KIBANA SETUP - MAIN TASKS
 # =============================================================================
 
-- name: Wait for Kibana API to be ready
-  uri:
-    url: "{{ kibana_api_url }}/api/status"
-    method: GET
-    return_content: yes
-    status_code: 200
-  register: kibana_status
-  retries: "{{ kibana_api_retries | default(15) }}"
-  delay: "{{ kibana_api_delay | default(10) }}"
-  until: kibana_status.status == 200
+# -----------------------------------------------------------------------------
+# Wait for Kibana to be ready
+# -----------------------------------------------------------------------------
+- name: Wait for Kibana TCP port
+  wait_for:
+    host: "{{ kibana_host }}"
+    port: "{{ kibana_port }}"
+    timeout: 300
+    delay: 10
   tags: [kibana_setup, wait]
 
-# =============================================================================
-# Data Views
-# =============================================================================
+- name: Check Kibana API status
+  uri:
+    url: "{{ kibana_url }}/api/status"
+    method: GET
+    status_code: 200
+  register: kibana_status
+  until: kibana_status.status == 200
+  retries: 30
+  delay: 10
+  tags: [kibana_setup, check]
 
+# -----------------------------------------------------------------------------
+# Create Data Views
+# -----------------------------------------------------------------------------
 - name: Create Data Views
   uri:
-    url: "{{ kibana_api_url }}/api/data_views/data_view"
+    url: "{{ kibana_url }}/api/data_views/data_view"
     method: POST
+    headers:
+      Content-Type: "application/json"
+      kbn-xsrf: "true"
     body_format: json
     body:
       data_view:
         id: "{{ item.id }}"
-        name: "{{ item.title }}"
+        name: "{{ item.name }}"
         title: "{{ item.title }}"
         timeFieldName: "{{ item.time_field }}"
-    headers:
-      Content-Type: "application/json"
-      kbn-xsrf: "true"
-    status_code: [200, 201, 400, 409]
+    status_code: [200, 201, 409]
   loop: "{{ kibana_data_views }}"
+  loop_control:
+    label: "{{ item.name }}"
   register: data_view_result
+  failed_when: data_view_result.status not in [200, 201, 409]
   tags: [kibana_setup, dataviews]
 
-- name: Display Data View creation results
+- name: Show Data Views creation summary
   debug:
-    msg: "Data View '{{ item.item.title }}':
-          {% if item.status in [200, 201] %}✅ Created
-          {% elif item.status == 409 %}ℹ️  Already exists (409)
-          {% elif item.status == 400 and 'Duplicate' in (item.json.message | default('')) %}ℹ️  Already exists (400)
-          {% else %}⚠️  {{ item.json.message | default('Status: ' + item.status | string) }}{% endif %}"
-  loop: "{{ data_view_result.results }}"
+    msg: "Data Views: {{ data_view_result.results | selectattr('status', 'in', [200, 201]) | list | length }} created, {{ data_view_result.results | selectattr('status', 'equalto', 409) | list | length }} already exist"
   tags: [kibana_setup, dataviews]
-
-- name: Set default Data View
-  uri:
-    url: "{{ kibana_api_url }}/api/kibana/settings"
-    method: POST
-    body_format: json
-    body:
-      changes:
-        defaultIndex: "{{ kibana_default_data_view }}"
-    headers:
-      Content-Type: "application/json"
-      kbn-xsrf: "true"
-    status_code: [200, 400]
-  tags: [kibana_setup, dataviews]
-
-# =============================================================================
-# Saved Searches (Pre-filtered views)
-# =============================================================================
-
-- name: Create Nginx Access Log saved search
-  uri:
-    url: "{{ kibana_api_url }}/api/saved_objects/search/nginx-access-logs"
-    method: POST
-    body_format: json
-    body:
-      attributes:
-        title: "Nginx Access Logs"
-        description: "Pre-filtered view for nginx access.log"
-        hits: 0
-        columns:
-          - "@timestamp"
-          - "message"
-          - "source.ip"
-          - "url.path"
-          - "http.response.status_code"
-        sort:
-          - - "@timestamp"
-            - desc
-        version: 1
-        kibanaSavedObjectMeta:
-          searchSourceJSON: |
-            {
-              "indexRefName": "kibanaSavedObjectMeta.searchSourceJSON.index",
-              "query": {
-                "query": "service: \"nginx-access\"",
-                "language": "kuery"
-              },
-              "filter": []
-            }
-      references:
-        - name: "kibanaSavedObjectMeta.searchSourceJSON.index"
-          type: "index-pattern"
-          id: "applogs-*"
-    headers:
-      Content-Type: "application/json"
-      kbn-xsrf: "true"
-    status_code: [200, 201, 400, 409]
-  register: saved_search_access_result
-  tags: [kibana_setup, saved_searches]
-
-- name: Create Nginx Error Log saved search
-  uri:
-    url: "{{ kibana_api_url }}/api/saved_objects/search/nginx-error-logs"
-    method: POST
-    body_format: json
-    body:
-      attributes:
-        title: "Nginx Error Logs"
-        description: "Pre-filtered view for nginx error.log"
-        hits: 0
-        columns:
-          - "@timestamp"
-          - "message"
-          - "log.level"
-          - "error.message"
-        sort:
-          - - "@timestamp"
-            - desc
-        version: 1
-        kibanaSavedObjectMeta:
-          searchSourceJSON: |
-            {
-              "indexRefName": "kibanaSavedObjectMeta.searchSourceJSON.index",
-              "query": {
-                "query": "service: \"nginx-error\"",
-                "language": "kuery"
-              },
-              "filter": []
-            }
-      references:
-        - name: "kibanaSavedObjectMeta.searchSourceJSON.index"
-          type: "index-pattern"
-          id: "applogs-*"
-    headers:
-      Content-Type: "application/json"
-      kbn-xsrf: "true"
-    status_code: [200, 201, 400, 409]
-  register: saved_search_error_result
-  tags: [kibana_setup, saved_searches]
-
-# =============================================================================
-# Elasticsearch Logs Saved Search
-# =============================================================================
-
-- name: Create Elasticsearch Logs saved search
-  uri:
-    url: "{{ kibana_api_url }}/api/saved_objects/search/elasticsearch-logs"
-    method: POST
-    body_format: json
-    body:
-      attributes:
-        title: "Elasticsearch Logs"
-        description: "Pre-filtered view for elasticsearch logs"
-        hits: 0
-        columns:
-          - "@timestamp"
-          - "message"
-          - "log.level"
-          - "component"
-        sort:
-          - - "@timestamp"
-            - desc
-        version: 1
-        kibanaSavedObjectMeta:
-          searchSourceJSON: |
-            {
-              "indexRefName": "kibanaSavedObjectMeta.searchSourceJSON.index",
-              "query": {
-                "query": "service: \"elasticsearch\"",
-                "language": "kuery"
-              },
-              "filter": []
-            }
-      references:
-        - name: "kibanaSavedObjectMeta.searchSourceJSON.index"
-          type: "index-pattern"
-          id: "applogs-*"
-    headers:
-      Content-Type: "application/json"
-      kbn-xsrf: "true"
-    status_code: [200, 201, 400, 409]
-  register: saved_search_es_result
-  tags: [kibana_setup, saved_searches]
-
-
-# =============================================================================
-# Kibana Logs Saved Search
-# =============================================================================
-
-- name: Create Kibana Logs saved search
-  uri:
-    url: "{{ kibana_api_url }}/api/saved_objects/search/kibana-logs"
-    method: POST
-    body_format: json
-    body:
-      attributes:
-        title: "Kibana Logs"
-        description: "Pre-filtered view for kibana logs"
-        hits: 0
-        columns:
-          - "@timestamp"
-          - "message"
-          - "log.level"
-          - "tags"
-        sort:
-          - - "@timestamp"
-            - desc
-        version: 1
-        kibanaSavedObjectMeta:
-          searchSourceJSON: |
-            {
-              "indexRefName": "kibanaSavedObjectMeta.searchSourceJSON.index",
-              "query": {
-                "query": "service: \"kibana\"",
-                "language": "kuery"
-              },
-              "filter": []
-            }
-      references:
-        - name: "kibanaSavedObjectMeta.searchSourceJSON.index"
-          type: "index-pattern"
-          id: "applogs-*"
-    headers:
-      Content-Type: "application/json"
-      kbn-xsrf: "true"
-    status_code: [200, 201, 400, 409]
-  register: saved_search_kibana_result
-  tags: [kibana_setup, saved_searches]
-
-
-
-# =============================================================================
-# Prometheus Logs Saved Search
-# =============================================================================
-
-- name: Create Prometheus Logs saved search
-  uri:
-    url: "{{ kibana_api_url }}/api/saved_objects/search/prometheus-logs"
-    method: POST
-    body_format: json
-    body:
-      attributes:
-        title: "Prometheus Logs"
-        description: "Pre-filtered view for prometheus logs"
-        hits: 0
-        columns:
-          - "@timestamp"
-          - "message"
-          - "log.level"
-          - "caller"
-        sort:
-          - - "@timestamp"
-            - desc
-        version: 1
-        kibanaSavedObjectMeta:
-          searchSourceJSON: |
-            {
-              "indexRefName": "kibanaSavedObjectMeta.searchSourceJSON.index",
-              "query": {
-                "query": "service: \"prometheus\"",
-                "language": "kuery"
-              },
-              "filter": []
-            }
-      references:
-        - name: "kibanaSavedObjectMeta.searchSourceJSON.index"
-          type: "index-pattern"
-          id: "applogs-*"
-    headers:
-      Content-Type: "application/json"
-      kbn-xsrf: "true"
-    status_code: [200, 201, 400, 409]
-  register: saved_search_prometheus_result
-  tags: [kibana_setup, saved_searches]
-
-# =============================================================================
-# Grafana Logs Saved Search
-# =============================================================================
-
-- name: Create Grafana Logs saved search
-  uri:
-    url: "{{ kibana_api_url }}/api/saved_objects/search/grafana-logs"
-    method: POST
-    body_format: json
-    body:
-      attributes:
-        title: "Grafana Logs"
-        description: "Pre-filtered view for grafana logs"
-        hits: 0
-        columns:
-          - "@timestamp"
-          - "message"
-          - "log.level"
-          - "logger"
-        sort:
-          - - "@timestamp"
-            - desc
-        version: 1
-        kibanaSavedObjectMeta:
-          searchSourceJSON: |
-            {
-              "indexRefName": "kibanaSavedObjectMeta.searchSourceJSON.index",
-              "query": {
-                "query": "service: \"grafana\"",
-                "language": "kuery"
-              },
-              "filter": []
-            }
-      references:
-        - name: "kibanaSavedObjectMeta.searchSourceJSON.index"
-          type: "index-pattern"
-          id: "applogs-*"
-    headers:
-      Content-Type: "application/json"
-      kbn-xsrf: "true"
-    status_code: [200, 201, 400, 409]
-  register: saved_search_grafana_result
-  tags: [kibana_setup, saved_searches]
-
-# =============================================================================
-# Visualizations
-# =============================================================================
-
-- name: Create Nginx Requests per Minute visualization
-  uri:
-    url: "{{ kibana_api_url }}/api/saved_objects/visualization/nginx-requests-per-minute"
-    method: POST
-    body_format: json
-    body:
-      attributes:
-        title: "Nginx Requests per Minute"
-        description: "Total nginx requests over time"
-        visState: |
-          {
-            "title": "Nginx Requests per Minute",
-            "type": "line",
-            "aggs": [
-              {
-                "id": "1",
-                "enabled": true,
-                "type": "count",
-                "params": {},
-                "schema": "metric"
-              },
-              {
-                "id": "2",
-                "enabled": true,
-                "type": "date_histogram",
-                "params": {
-                  "interval": "1m",
-                  "customInterval": "1m",
-                  "min_doc_count": 0,
-                  "extended_bounds": {}
-                },
-                "schema": "segment"
-              }
-            ],
-            "params": {
-              "addTooltip": true,
-              "addLegend": true,
-              "legendPosition": "right",
-              "times": [],
-              "addTimeMarker": false
-            }
-          }
-        uiStateJSON: "{}"
-        version: 1
-        kibanaSavedObjectMeta:
-          searchSourceJSON: |
-            {
-              "indexRefName": "kibanaSavedObjectMeta.searchSourceJSON.index",
-              "query": {
-                "query": "service: \"nginx-access\"",
-                "language": "kuery"
-              },
-              "filter": []
-            }
-      references:
-        - name: "kibanaSavedObjectMeta.searchSourceJSON.index"
-          type: "index-pattern"
-          id: "applogs-*"
-    headers:
-      Content-Type: "application/json"
-      kbn-xsrf: "true"
-    status_code: [200, 201, 400, 409]
-  register: vis_nginx_requests_result
-  tags: [kibana_setup, visualizations]
-
-
-# =============================================================================
-# Dashboards
-# =============================================================================
-
-- name: Create Nginx Overview Dashboard
-  uri:
-    url: "{{ kibana_api_url }}/api/saved_objects/dashboard/nginx-overview"
-    method: POST
-    body_format: json
-    body:
-      attributes:
-        title: "Nginx Overview Dashboard"
-        description: "Overview of nginx access and error logs"
-        hits: 0
-        panelsJSON: |
-          [
-            {
-              "gridData": {
-                "w": 24,
-                "h": 15,
-                "x": 0,
-                "y": 0,
-                "i": "1"
-              },
-              "version": "9.3.2",
-              "panelIndex": "1",
-              "panelRefName": "panel_1",
-              "embeddableConfig": {}
-            },
-            {
-              "gridData": {
-                "w": 12,
-                "h": 15,
-                "x": 0,
-                "y": 15,
-                "i": "2"
-              },
-              "version": "9.3.2",
-              "panelIndex": "2",
-              "panelRefName": "panel_2",
-              "embeddableConfig": {}
-            },
-            {
-              "gridData": {
-                "w": 12,
-                "h": 15,
-                "x": 12,
-                "y": 15,
-                "i": "3"
-              },
-              "version": "9.3.2",
-              "panelIndex": "3",
-              "panelRefName": "panel_3",
-              "embeddableConfig": {}
-            }
-          ]
-        timeRestore: false
-        version: 1
-        kibanaSavedObjectMeta:
-          searchSourceJSON: |
-            {
-              "query": {
-                "query": "",
-                "language": "kuery"
-              },
-              "filter": []
-            }
-      references:
-        - name: "panel_1"
-          type: "visualization"
-          id: "nginx-requests-per-minute"
-        - name: "panel_2"
-          type: "search"
-          id: "nginx-access-logs"
-        - name: "panel_3"
-          type: "search"
-          id: "nginx-error-logs"
-    headers:
-      Content-Type: "application/json"
-      kbn-xsrf: "true"
-    status_code: [200, 201, 400, 409]
-  register: dashboard_nginx_result
-  tags: [kibana_setup, dashboards]
-

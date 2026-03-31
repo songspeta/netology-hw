@@ -30,7 +30,7 @@ xpack.security.enrollment.enabled: {{ es_xpack_security_enrollment_enabled | low
 xpack.security.http.ssl.enabled: false
 xpack.security.transport.ssl.enabled: false
 
-# ------------------------ CORS (для Kibana) -----------------
+# ------------------------ CORS -----------------
 http.cors.enabled: {{ es_cors_enabled | lower }}
 http.cors.allow-origin: "{{ es_cors_allow_origin }}"
 http.cors.allow-headers: X-Requested-With,Content-Type,Content-Length,Authorization

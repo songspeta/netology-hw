@@ -20,3 +20,41 @@
       - gnupg
     state: present
   tags: [base, packages]
+
+
+- name: Set timezone to Moscow (Europe/Moscow)
+  timezone:
+    name: Europe/Moscow
+  tags: [base, timezone]
+
+- name: Ensure systemd-timesyncd is running
+  systemd:
+    name: systemd-timesyncd
+    state: started
+    enabled: yes
+  tags: [base, timezone]
+
+- name: Configure sysctl for better network performance
+  sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: yes
+  loop:
+    - { name: 'net.core.somaxconn', value: '65535' }
+    - { name: 'vm.swappiness', value: '1' }
+    - { name: 'net.ipv4.tcp_max_syn_backlog', value: '65535' }
+  tags: [base, sysctl]
+
+- name: Set system limits for Elasticsearch and other services
+  pam_limits:
+    domain: '*'
+    limit_type: "{{ item.limit_type }}"
+    limit_item: "{{ item.limit_item }}"
+    value: "{{ item.value }}"
+  loop:
+    - { limit_type: 'soft', limit_item: 'nofile', value: '65536' }
+    - { limit_type: 'hard', limit_item: 'nofile', value: '65536' }
+    - { limit_type: 'soft', limit_item: 'nproc', value: '65536' }
+    - { limit_type: 'hard', limit_item: 'nproc', value: '65536' }
+  tags: [base, limits]

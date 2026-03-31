@@ -1,13 +1,14 @@
 ---
-# =============================================================================
-# Kibana Default Variables - Version 9.3.2
-# =============================================================================
 
-# Server settings
+# ------------------------ Server Settings -------------------
 kibana_server_host: 0.0.0.0
 kibana_server_port: 5601
 kibana_server_name: "kibana"
 
-# Elasticsearch connection (private IP from inventory!)
-elasticsearch_hosts:
-  - "http://{{ hostvars['elasticsearch']['ansible_host'] }}:9200"
+# ------------------------ Logging Settings ------------------
+kibana_log_level: info
+kibana_log_file: /var/log/kibana/kibana.log
+
+# ------------------------ Telemetry -------------------------
+kibana_telemetry_enabled: false
+kibana_telemetry_optin: false

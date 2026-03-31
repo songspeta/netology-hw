@@ -19,7 +19,7 @@ Host *
 # -----------------------------------------------------------------------------
 # Bastion Host (direct connection)
 # -----------------------------------------------------------------------------
-Host bastion
+Host bastion-a-1
     HostName ${bastion_ip}
     User ubuntu
     IdentityFile ~/.ssh/terr
@@ -31,46 +31,46 @@ Host web-a-1
     HostName ${web_a_ip}
     User ubuntu
     IdentityFile ~/.ssh/terr
-    ProxyJump bastion
+    ProxyJump bastion-a-1
 
 Host web-b-1
     HostName ${web_b_ip}
     User ubuntu
     IdentityFile ~/.ssh/terr
-    ProxyJump bastion
+    ProxyJump bastion-a-1
 
 # -----------------------------------------------------------------------------
 # Elasticsearch (through Bastion)
 # -----------------------------------------------------------------------------
-Host elasticsearch
+Host elasticsearch-b-1
     HostName ${elasticsearch_ip}
     User ubuntu
     IdentityFile ~/.ssh/terr
-    ProxyJump bastion
+    ProxyJump bastion-a-1
 
 # -----------------------------------------------------------------------------
 # Kibana (through Bastion)
 # -----------------------------------------------------------------------------
-Host kibana
+Host kibana-b-1
     HostName ${kibana_ip}
     User ubuntu
     IdentityFile ~/.ssh/terr
-    ProxyJump bastion
+    ProxyJump bastion-a-1
 
 # -----------------------------------------------------------------------------
 # Prometheus (through Bastion)
 # -----------------------------------------------------------------------------
-Host prometheus
+Host prometheus-a-1
     HostName ${prometheus_ip}
     User ubuntu
     IdentityFile ~/.ssh/terr
-    ProxyJump bastion
+    ProxyJump bastion-a-1
 
 # -----------------------------------------------------------------------------
 # Grafana (through Bastion)
 # -----------------------------------------------------------------------------
-Host grafana
+Host grafana-a-1
     HostName ${grafana_ip}
     User ubuntu
     IdentityFile ~/.ssh/terr
-    ProxyJump bastion
+    ProxyJump bastion-a-1

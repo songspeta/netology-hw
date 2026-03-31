@@ -11,16 +11,16 @@
     - base
     - security
     - node_exporter
+    - filebeat
 
 
-# 2. Web Servers (Nginx + Filebeat)
+# 2. Web Servers
 - name: Configure Web Servers
   hosts: webservers
   become: true
   roles:
     - nginx_exporter
     - nginx
-    - filebeat
 
 # 3. Prometheus
 - name: Configure Prometheus
@@ -36,7 +36,6 @@
   become: true
   roles:
     - grafana
-    - filebeat
 
 # 5. Elasticsearch
 - name: Configure Elasticsearch
@@ -44,7 +43,6 @@
   become: true
   roles:
     - elasticsearch
-    - filebeat
 
 # 6. Kibana
 - name: Configure Kibana
@@ -52,9 +50,8 @@
   become: true
   roles:
     - kibana
-    - filebeat
 
-# 7. Kibana Setup (Data Views, Dashboards)
+# 7. Kibana Setup (Data Views)
 - name: Configure Kibana (Data Views)
   hosts: kibana
   become: true

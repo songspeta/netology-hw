@@ -1,0 +1,218 @@
+# =============================================================================
+# GRAFANA ENTERPRISE 12.4.2 - INSTALLATION & CONFIGURATION
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Install prerequisites
+# -----------------------------------------------------------------------------
+- name: Install prerequisites
+  apt:
+    name:
+      - adduser
+      - libfontconfig1
+      - musl
+      - apt-transport-https
+    state: present
+    update_cache: yes
+  tags:
+    - grafana
+    - install
+
+# -----------------------------------------------------------------------------
+# Copy local Grafana .deb package to server
+# -----------------------------------------------------------------------------
+- name: Copy Grafana Enterprise package to server
+  copy:
+    src: grafana-enterprise_12.4.2_23531306697_linux_amd64.deb
+    dest: /tmp/grafana-enterprise_12.4.2_23531306697_linux_amd64.deb
+    mode: "0644"
+  tags:
+    - grafana
+    - install
+
+# -----------------------------------------------------------------------------
+# Install Grafana from local package
+# -----------------------------------------------------------------------------
+- name: Install Grafana Enterprise
+  apt:
+    deb: /tmp/grafana-enterprise_12.4.2_23531306697_linux_amd64.deb
+    state: present
+  tags:
+    - grafana
+    - install
+
+# -----------------------------------------------------------------------------
+# Enable and start Grafana service
+# -----------------------------------------------------------------------------
+- name: Enable and start Grafana
+  systemd:
+    name: grafana-server
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  tags:
+    - grafana
+    - service
+
+# -----------------------------------------------------------------------------
+# Configure grafana.ini settings
+# -----------------------------------------------------------------------------
+- name: Configure Grafana settings
+  lineinfile:
+    path: /etc/grafana/grafana.ini
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    state: present
+  loop:
+    - regexp: "^;?admin_user\\s*="
+      line: "admin_user = admin"
+    - regexp: "^;?admin_password\\s*="
+      line: "admin_password = admin"
+    - regexp: "^;?http_port\\s*="
+      line: "http_port = 3000"
+  notify: Restart Grafana
+  tags:
+    - grafana
+    - config
+
+# -----------------------------------------------------------------------------
+# Wait for Grafana API to be ready
+# -----------------------------------------------------------------------------
+- name: Wait for Grafana to be available
+  wait_for:
+    host: localhost
+    port: 3000
+    timeout: 120
+    delay: 10
+  tags:
+    - grafana
+    - wait
+
+# -----------------------------------------------------------------------------
+# Create provisioning directories
+# -----------------------------------------------------------------------------
+- name: Create provisioning directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - /etc/grafana/provisioning/datasources
+    - /etc/grafana/provisioning/dashboards
+  tags:
+    - grafana
+    - provisioning
+
+# -----------------------------------------------------------------------------
+# Configure Prometheus DataSource via provisioning
+# -----------------------------------------------------------------------------
+- name: Create Prometheus DataSource provisioning config
+  copy:
+    dest: /etc/grafana/provisioning/datasources/prometheus.yml
+    content: |
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          type: prometheus
+          access: proxy
+          url: http://{{ hostvars['prometheus-a-1']['ansible_host'] }}:9090
+          isDefault: true
+          editable: true
+          jsonData:
+            timeInterval: 15s
+            httpMethod: POST
+    mode: "0644"
+  notify: Restart Grafana
+  tags:
+    - grafana
+    - provisioning
+    - datasource
+
+# -----------------------------------------------------------------------------
+# Configure Dashboard provisioning
+# -----------------------------------------------------------------------------
+- name: Create Dashboard provisioning config
+  copy:
+    dest: /etc/grafana/provisioning/dashboards/dashboards.yml
+    content: |
+      apiVersion: 1
+      providers:
+        - name: 'DevOps Coursework'
+          orgId: 1
+          folder: ''
+          type: file
+          disableDeletion: false
+          updateIntervalSeconds: 30
+          allowUiUpdates: true
+          options:
+            path: /etc/grafana/provisioning/dashboards
+    mode: "0644"
+  notify: Restart Grafana
+  tags:
+    - grafana
+    - provisioning
+    - dashboards
+
+# -----------------------------------------------------------------------------
+# Download ready-made dashboards
+# -----------------------------------------------------------------------------
+- name: Download Node Exporter Full dashboard (ID:1860)
+  get_url:
+    url: https://grafana.com/api/dashboards/1860/revisions/latest/download
+    dest: /etc/grafana/provisioning/dashboards/node-exporter-full.json
+    mode: "0644"
+  tags:
+    - grafana
+    - dashboards
+    - download
+
+- name: Download Nginx dashboard (ID:12708)
+  get_url:
+    url: https://grafana.com/api/dashboards/12708/revisions/1/download
+    dest: /etc/grafana/provisioning/dashboards/nginx-dashboard.json
+    mode: "0644"
+  tags:
+    - grafana
+    - dashboards
+    - download
+
+
+# -----------------------------------------------------------------------------
+# Verification
+# -----------------------------------------------------------------------------
+- name: Verify Grafana is running
+  uri:
+    url: http://localhost:3000/api/health
+    method: GET
+    return_content: yes
+    status_code:
+      - 200
+  register: grafana_health
+  tags:
+    - grafana
+    - verify
+
+- name: Show Grafana health status
+  debug:
+    msg: |
+      Grafana is running!
+      - Database: {{ grafana_health.json.database }}
+      - Commit: {{ grafana_health.json.commit }}
+      - Version: {{ grafana_health.json.version }}
+  tags:
+    - grafana
+    - verify
+
+- name: Show dashboards summary
+  debug:
+    msg: |
+      Dashboards configured:
+      - Node Exporter Full (1860) - System metrics
+      - Nginx Dashboard (14900) - HTTP metrics
+      - System Metrics (USE) - Custom
+      - HTTP Metrics (USE) - Custom
+      Access: http://{{ ansible_host }}:3000
+      Login: admin / admin
+  tags:
+    - grafana
+    - verify

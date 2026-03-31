@@ -1,0 +1,84 @@
+# =============================================================================
+# Filebeat Configuration - Elasticsearch Server
+# =============================================================================
+
+filebeat.config.modules:
+  path: ${path.config}/modules.d/*.yml
+  reload.enabled: false
+
+filebeat.inputs:
+  # =========================================================================
+  # ELASTICSEARCH LOGS
+  # =========================================================================
+  - type: filestream
+    enabled: true
+    id: elasticsearch-logs
+    paths:
+      - /var/log/elasticsearch/*.log
+    prospector.scanner.fingerprint.enabled: false
+    file_identity:
+      native: ~
+    prospector.scanner.fingerprint.length: 1
+    fields:
+      service: elasticsearch
+      environment: production
+      host: {{ inventory_hostname }}
+    fields_under_root: false
+
+  # =========================================================================
+  # SYSLOG
+  # =========================================================================
+  - type: filestream
+    enabled: true
+    id: syslog
+    paths:
+      - /var/log/syslog
+    prospector.scanner.fingerprint.enabled: false
+    file_identity:
+      native: ~
+    prospector.scanner.fingerprint.length: 1
+    fields:
+      service: syslog
+      environment: production
+      host: {{ inventory_hostname }}
+    fields_under_root: false
+
+# =============================================================================
+# OUTPUT
+# =============================================================================
+output.elasticsearch:
+  hosts:
+    - "http://{{ hostvars['elasticsearch-b-1']['ansible_host'] }}:9200"
+  index: "filebeat-%{[fields.service]}-%{+yyyy.MM.dd}"
+
+# =============================================================================
+# НАСТРОЙКИ ШАБЛОНА И ILM
+# =============================================================================
+setup.ilm.enabled: false
+setup.template.enabled: false
+setup.template.name: "filebeat"
+setup.template.pattern: "filebeat-*"
+
+# =============================================================================
+# PROCESSORS
+# =============================================================================
+processors:
+  - add_host_metadata:
+      when.not.contains.tags: forwarded
+  - add_cloud_metadata: ~
+
+# =============================================================================
+# LOGGING
+# =============================================================================
+logging.level: warning
+logging.to_files: true
+logging.files:
+  path: /var/log/filebeat
+  name: filebeat
+  keepfiles: 7
+  permissions: 0644
+
+# =============================================================================
+# MONITORING
+# =============================================================================
+http.enabled: false

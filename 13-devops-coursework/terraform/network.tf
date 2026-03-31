@@ -1,5 +1,5 @@
 # =============================================================================
-# NETWORK (VPC, SUBNETS, NAT GATEWAY, ROUTE TABLES)
+# NETWORK
 # =============================================================================
 # Создаём облачную сеть
 resource "yandex_vpc_network" "main" {
@@ -8,7 +8,7 @@ resource "yandex_vpc_network" "main" {
 }
 
 # =============================================================================
-# PUBLIC SUBNETS (Bastion, ALB, Grafana, Kibana)
+# PUBLIC SUBNETS
 # =============================================================================
 # Публичная подсеть Zone A
 resource "yandex_vpc_subnet" "public_a" {
@@ -27,7 +27,7 @@ resource "yandex_vpc_subnet" "public_b" {
 }
 
 # =============================================================================
-# PRIVATE SUBNETS (Web, Prometheus, Elasticsearch)
+# PRIVATE SUBNETS
 # =============================================================================
 # Приватная подсеть Zone A
 resource "yandex_vpc_subnet" "private_a" {
@@ -48,7 +48,7 @@ resource "yandex_vpc_subnet" "private_b" {
 }
 
 # =============================================================================
-# NAT GATEWAY (для выхода в интернет из приватных подсетей)
+# NAT GATEWAY
 # =============================================================================
 resource "yandex_vpc_gateway" "nat_gateway" {
   name = "${var.resource_prefix}-nat-gateway"

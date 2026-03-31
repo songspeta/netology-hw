@@ -1,4 +1,14 @@
 ---
+# =============================================================================
+# ROLE: FILEBEAT
+# Описание: Установка и настройка Filebeat для сбора логов
+# Применимо к: all
+# Конфигурация: Разная для каждой группы хостов
+# =============================================================================
+
+# =============================================================================
+# 1. PACKAGES
+# =============================================================================
 - name: Check if Filebeat is already installed
   command: dpkg -l filebeat
   register: filebeat_installed
@@ -21,19 +31,84 @@
   when: filebeat_installed.rc != 0
   tags: [filebeat, packages]
 
-- name: Deploy Filebeat configuration
+# =============================================================================
+# 2. CONFIGURATION
+# =============================================================================
+
+# --- Web Servers (nginx + submissions + syslog) ---
+- name: Deploy Filebeat config for Web Servers
   template:
-    src: filebeat.yml.j2
+    src: filebeat-webservers.yml.j2
     dest: /etc/filebeat/filebeat.yml
     mode: '0644'
     backup: yes
+  when: inventory_hostname in groups['webservers']
   notify: Restart Filebeat
   tags: [filebeat, config]
 
+# --- Prometheus ---
+- name: Deploy Filebeat config for Prometheus
+  template:
+    src: filebeat-prometheus.yml.j2
+    dest: /etc/filebeat/filebeat.yml
+    mode: '0644'
+    backup: yes
+  when: inventory_hostname in groups['prometheus']
+  notify: Restart Filebeat
+  tags: [filebeat, config]
+
+# --- Grafana ---
+- name: Deploy Filebeat config for Grafana
+  template:
+    src: filebeat-grafana.yml.j2
+    dest: /etc/filebeat/filebeat.yml
+    mode: '0644'
+    backup: yes
+  when: inventory_hostname in groups['grafana']
+  notify: Restart Filebeat
+  tags: [filebeat, config]
+
+# --- Elasticsearch ---
+- name: Deploy Filebeat config for Elasticsearch
+  template:
+    src: filebeat-elasticsearch.yml.j2
+    dest: /etc/filebeat/filebeat.yml
+    mode: '0644'
+    backup: yes
+  when: inventory_hostname in groups['elasticsearch']
+  notify: Restart Filebeat
+  tags: [filebeat, config]
+
+# --- Kibana ---
+- name: Deploy Filebeat config for Kibana
+  template:
+    src: filebeat-kibana.yml.j2
+    dest: /etc/filebeat/filebeat.yml
+    mode: '0644'
+    backup: yes
+  when: inventory_hostname in groups['kibana']
+  notify: Restart Filebeat
+  tags: [filebeat, config]
+
+# --- Bastion (syslog + auth) ---
+- name: Deploy Filebeat config for Bastion
+  template:
+    src: filebeat-bastion.yml.j2
+    dest: /etc/filebeat/filebeat.yml
+    mode: '0644'
+    backup: yes
+  when: inventory_hostname in groups['bastion']
+  notify: Restart Filebeat
+  tags: [filebeat, config]
+
+# =============================================================================
+# 3. CONFIGURATION TEST
+# =============================================================================
 - name: Test Filebeat configuration
   command: filebeat test config -c /etc/filebeat/filebeat.yml
   register: filebeat_config_test
   changed_when: false
+  failed_when: false
   tags: [filebeat, config]
 
 - name: Display config test result
@@ -41,6 +116,9 @@
     var: filebeat_config_test.stdout_lines
   tags: [filebeat, config]
 
+# =============================================================================
+# 4. SERVICE MANAGEMENT
+# =============================================================================
 - name: Ensure Filebeat is started and enabled
   systemd:
     name: filebeat
@@ -49,9 +127,14 @@
     daemon_reload: yes
   tags: [filebeat, service]
 
-- name: Wait for Filebeat to start
-  pause:
-    seconds: 10
+- name: Wait for Filebeat to be active
+  command: systemctl is-active filebeat
+  register: filebeat_check
+  until: filebeat_check.stdout == 'active'
+  retries: 10
+  delay: 3
+  changed_when: false
+  failed_when: false
   tags: [filebeat, service]
 
 - name: Check Filebeat status
@@ -60,21 +143,4 @@
   changed_when: false
   failed_when: false
   tags: [filebeat, service]
-
-- name: Display Filebeat status
-  debug:
-    msg: "Filebeat is {{ filebeat_status.stdout }}"
-  tags: [filebeat, service]
-
-- name: Show Filebeat logs if failed
-  shell: journalctl -u filebeat -n 20 --no-pager
-  when: filebeat_status.stdout != 'active'
-  register: filebeat_logs
-  tags: [filebeat, debug]
-
-- name: Display Filebeat error logs
-  debug:
-    var: filebeat_logs.stdout_lines
-  when: filebeat_status.stdout != 'active'
-  tags: [filebeat, debug]
 

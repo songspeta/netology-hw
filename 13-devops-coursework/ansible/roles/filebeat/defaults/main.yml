@@ -1,18 +1,43 @@
 ---
-# Filebeat Default Variables - Version 9.3.2
+# =============================================================================
+# FILEBEAT DEFAULT VARIABLES
+# =============================================================================
 
+# -----------------------------------------------------------------------------
+# Filebeat Version & Installation
+# -----------------------------------------------------------------------------
 filebeat_version: "9.3.2"
-filebeat_package: "filebeat-{{ filebeat_version }}-amd64.deb"
+filebeat_package_state: present
 
-# Elasticsearch connection
-elasticsearch_hosts:
-  - "{{ hostvars['elasticsearch']['ansible_host'] }}:9200"
+# -----------------------------------------------------------------------------
+# Index Settings
+# -----------------------------------------------------------------------------
+filebeat_ilm_enabled: false
+filebeat_template_enabled: false
+filebeat_template_name: "filebeat"
+filebeat_template_pattern: "filebeat-*"
 
-# Log paths
-filebeat_log_paths:
-  - /var/log/submissions.log
-  - /var/log/nginx/*.log
+# -----------------------------------------------------------------------------
+# Logging Settings
+# -----------------------------------------------------------------------------
+filebeat_log_level: warning
+filebeat_log_path: /var/log/filebeat
+filebeat_log_filename: filebeat
+filebeat_log_keepfiles: 7
 
-# Log retention
-filebeat_logging_level: warning
-filebeat_logging_keepfiles: 7
+# -----------------------------------------------------------------------------
+# Service Settings
+# -----------------------------------------------------------------------------
+filebeat_service_enabled: yes
+filebeat_service_state: started
+
+# -----------------------------------------------------------------------------
+# Processors
+# -----------------------------------------------------------------------------
+filebeat_add_host_meta: true
+filebeat_add_cloud_meta: true
+
+# -----------------------------------------------------------------------------
+# Filebeat Package
+# -----------------------------------------------------------------------------
+filebeat_package: "filebeat-9.3.2-amd64.deb"

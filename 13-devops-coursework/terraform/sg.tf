@@ -9,6 +9,7 @@ resource "yandex_vpc_security_group" "bastion" {
   description = "Security group for Bastion host"
   network_id  = yandex_vpc_network.main.id
 
+
   # Входящий: SSH только с одного IP
   ingress {
     description    = "SSH from admin"
@@ -26,6 +27,19 @@ resource "yandex_vpc_security_group" "bastion" {
     to_port        = 65535
   }
 }
+
+resource "yandex_vpc_security_group_rule" "bastion_node_exporter" {
+  security_group_binding = yandex_vpc_security_group.bastion.id
+  direction              = "ingress"
+  description            = "Node Exporter metrics from Monitoring"
+  protocol               = "TCP"
+  port                   = 9100
+  security_group_id = yandex_vpc_security_group.monitoring.id
+}
+
+
+
+
 
 # --- Web Security Group ---
 # HTTP от всех (для ALB healthcheck), SSH только от Bastion
@@ -141,8 +155,16 @@ resource "yandex_vpc_security_group" "logging" {
   }
 
 
-  # Входящий: Elasticsearch (9200-9300) от Web и Monitoring SG
+  # Входящий: Elasticsearch (9200-9300)
 
+
+ingress {
+  description       = "Elasticsearch from Bastion (Filebeat)"
+  protocol          = "TCP"
+  from_port         = 9200
+  to_port           = 9300
+  security_group_id = yandex_vpc_security_group.bastion.id
+}
     ingress {
     description       = "Elasticsearch from Logging group (Kibana)"
     protocol          = "TCP"

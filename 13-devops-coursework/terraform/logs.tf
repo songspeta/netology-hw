@@ -1,16 +1,18 @@
 # =============================================================================
 # LOGGING (ELASTICSEARCH + KIBANA)
 # =============================================================================
-# Elasticsearch — хранение и поиск логов (приватная подсеть, зона B)
-# Kibana — визуализация логов (публичная подсеть, зона B)
+# Elasticsearch — хранение и поиск логов (приватная подсеть)
+# Kibana — визуализация логов (публичная подсеть)
 
-# --- Elasticsearch Server (Zone B) ---
+# --- Elasticsearch Server ---
 resource "yandex_compute_instance" "elasticsearch" {
-  name        = "${var.resource_prefix}-elasticsearch"
-  description = "Elasticsearch logging server (zone B)"
-  hostname    = "${var.resource_prefix}-elasticsearch"
+  for_each = var.elasticsearch
 
-  zone        = "ru-central1-b"
+  name        = "${var.resource_prefix}-${each.key}"
+  hostname    = "${var.resource_prefix}-${each.key}"
+  description = "Elasticsearch server ${each.key}"
+
+  zone        = each.value.zone
   platform_id = "standard-v3"
 
   resources {
@@ -28,7 +30,7 @@ resource "yandex_compute_instance" "elasticsearch" {
   }
 
   network_interface {
-    subnet_id          = yandex_vpc_subnet.private_b.id
+    subnet_id          = each.value.subnet == "private_a" ? yandex_vpc_subnet.private_a.id : yandex_vpc_subnet.private_b.id
     nat                = false
     security_group_ids = [yandex_vpc_security_group.logging.id]
   }
@@ -44,13 +46,15 @@ resource "yandex_compute_instance" "elasticsearch" {
   allow_stopping_for_update = true
 }
 
-# --- Kibana Server (Zone B) ---
+# --- Kibana Server ---
 resource "yandex_compute_instance" "kibana" {
-  name        = "${var.resource_prefix}-kibana"
-  description = "Kibana visualization server (zone B)"
-  hostname    = "${var.resource_prefix}-kibana"
+  for_each = var.kibana
 
-  zone        = "ru-central1-b"
+  name        = "${var.resource_prefix}-${each.key}"
+  hostname    = "${var.resource_prefix}-${each.key}"
+  description = "Kibana server ${each.key}"
+
+  zone        = each.value.zone
   platform_id = "standard-v3"
 
   resources {
@@ -68,7 +72,7 @@ resource "yandex_compute_instance" "kibana" {
   }
 
   network_interface {
-    subnet_id          = yandex_vpc_subnet.public_b.id
+    subnet_id          = each.value.subnet == "public_a" ? yandex_vpc_subnet.public_a.id : yandex_vpc_subnet.public_b.id
     nat                = true
     security_group_ids = [yandex_vpc_security_group.logging.id]
   }

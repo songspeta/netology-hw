@@ -1,4 +1,10 @@
 ---
+# =============================================================================
+# ROLE: PROMETHEUS
+# Описание: Установка и настройка Prometheus сервера
+# Применимо к: prometheus
+# =============================================================================
+
 - name: Create Prometheus group
   group:
     name: "{{ prometheus_group }}"
@@ -25,7 +31,17 @@
   loop:
     - "{{ prometheus_config_dir }}"
     - "{{ prometheus_data_dir }}"
+    - "{{ prometheus_log_dir }}"
   tags: [prometheus]
+
+- name: Create Prometheus log file
+  file:
+    path: "{{ prometheus_log_dir }}/prometheus.log"
+    state: touch
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: '0644'
+  tags: [prometheus, config]
 
 - name: Download Prometheus
   get_url:
@@ -75,60 +91,7 @@
       Restart=always
       RestartSec=5
 
-      [Install]
-      WantedBy=multi-user.target
-    dest: /etc/systemd/system/prometheus.service
-    mode: '0644'
-  tags: [prometheus]
-
-- name: Enable and start Prometheus
-  systemd:
-    name: prometheus
-    enabled: yes
-    state: started
-    daemon_reload: yes
-  tags: [prometheus]
-
-
-- name: Create Prometheus log directory
-  file:
-    path: "{{ prometheus_log_dir }}"
-    state: directory
-    owner: "{{ prometheus_user }}"
-    group: "{{ prometheus_group }}"
-    mode: '0755'
-  tags: [prometheus, config]
-
-
-- name: Create Prometheus log file
-  file:
-    path: "{{ prometheus_log_dir }}/prometheus.log"
-    state: touch
-    owner: "{{ prometheus_user }}"
-    group: "{{ prometheus_group }}"
-    mode: '0644'
-  tags: [prometheus, config]
-
-
-- name: Create Prometheus systemd service
-  copy:
-    content: |
-      [Unit]
-      Description=Prometheus Monitoring System
-      After=network-online.target
-
-      [Service]
-      User={{ prometheus_user }}
-      Group={{ prometheus_group }}
-      Type=simple
-      ExecStart={{ prometheus_install_dir }}/prometheus \
-        --config.file={{ prometheus_config_dir }}/prometheus.yml \
-        --storage.tsdb.path={{ prometheus_data_dir }} \
-        --storage.tsdb.retention.time={{ prometheus_retention_time }} \
-        --web.listen-address={{ prometheus_listen_address }}:{{ prometheus_port }} \
-        --web.enable-lifecycle
-      Restart=always
-
+      # Перенаправление логов в файл
       StandardOutput=append:{{ prometheus_log_dir }}/prometheus.log
       StandardError=append:{{ prometheus_log_dir }}/prometheus.log
 
@@ -138,3 +101,11 @@
     mode: '0644'
   notify: Restart Prometheus
   tags: [prometheus, service]
+
+- name: Enable and start Prometheus
+  systemd:
+    name: prometheus
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  tags: [prometheus]
