@@ -76,7 +76,7 @@ Cоздайте ВМ, разверните на ней Elasticsearch. Устан
 
 ### 1.1 Цель работы
 Развёртывание отказоустойчивой веб-инфраструктуры с:
-- ✅ Автоматическим масштабированием (2 веб-сервера в разных зонах)
+- ✅ Горизонтальное распределение нагрузки (2 веб-сервера в разных зонах)
 - ✅ Централизованным мониторингом (Prometheus + Grafana)
 - ✅ Сбором и анализом логов (ELK Stack)
 - ✅ Резервным копированием (Snapshot Schedule)
@@ -124,7 +124,7 @@ Cоздайте ВМ, разверните на ней Elasticsearch. Устан
 ```bash
 # После terraform apply:
 GRAFANA_URL="http://<grafana_public_ip>:3000"   # login: admin / admin
-KIBANA_URL="http://<kibana_private_ip>:5601"      # Kibana UI
+KIBANA_URL="http://<kibana_public_ip>:5601"      # Kibana UI
 ALB_URL="http://<alb_public_ip>"             # Веб-сайт
 BASTION_IP=<bastion_public_ip>                # SSH вход
 ```
