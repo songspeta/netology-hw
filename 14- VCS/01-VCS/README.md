@@ -38,12 +38,12 @@ https://github.com/netology-code/sysadm-homeworks/blob/devsys10/02-git-01-vcs/RE
 #### git diff --staged
 Показывает изменения, которые уже добавлены в индекс (staged) и готовы к коммиту:
 
-![git diff --staged](img/git-diff-staged.png)
+
 
 #### git diff
 Показывает изменения в рабочей директории, которые ещё не добавлены в индекс:
 
-![git diff](img/git-diff.png)
+
 
 **Вывод:**
 - `git diff` — показывает изменения между рабочей директорией и индексом
