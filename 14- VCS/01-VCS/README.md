@@ -92,13 +92,14 @@ terraform.rc
 -   `*.override.tf` — файлы переопределения конфигурации
 
 ##  Структура репозитория
-
+```
 devops-netology/
 ├── README.md           # Описание курса и модулей
 ├── .gitignore          # Глобальный gitignore
 ├── terraform/
 │   └── .gitignore      # Gitignore для Terraform
 └── has_been_moved.txt  # Переименованный файл
+```
 
 
 ## Скриншоты
