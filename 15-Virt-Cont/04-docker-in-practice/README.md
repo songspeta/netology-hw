@@ -1,11 +1,11 @@
-# Домашнее задание к занятию 5. «Практическое применение Docker» - Спетницкий Д.И.
+# Домашнее задание к занятию  «Практическое применение Docker» - Спетницкий Д.И.
 
 
 **Репозиторий:** https://github.com/songspeta/shvirtd-example-python-netology-hw
 
 ---
 
-## ЗАДАЧА 1. 
+## ЗАДАЧА 1.
 
 ### 1. Fork репозитория
 Выполнен fork репозитория https://github.com/netology-code/shvirtd-example-python в пространство `songspeta`.
@@ -232,7 +232,7 @@ echo "Проект развёрнут: http://${EXTERNAL_IP}:8090"
 
 URL проверки: `http://111.88.254.146:8090`
 
-**Цепочка прохождения трафика:**  
+**Цепочка прохождения трафика:**
 Пользователь → Internet → Nginx → HAProxy → FastAPI (запись в БД) → HAProxy → Nginx → Internet → Пользователь
 
 ![4.1.png](img/4.1.png)
