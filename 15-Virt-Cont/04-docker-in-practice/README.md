@@ -294,6 +294,12 @@ docker rm terraform-temp
 ~/terraform --version
 ```
 
+## DIVE
+
+![6.1.2.png](/img6.1.2.png)
+
+
+
 **Результат:** `Terraform v1.15.5 on linux amd64`
 
 ![6.1.1.png](img/6.1.1.png)
