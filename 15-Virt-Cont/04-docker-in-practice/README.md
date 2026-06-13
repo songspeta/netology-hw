@@ -296,7 +296,7 @@ docker rm terraform-temp
 
 ## DIVE
 
-![6.1.2.png](/img6.1.2.png)
+![6.1.2.png](img/6.1.2.png)
 
 
 
