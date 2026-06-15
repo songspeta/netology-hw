@@ -258,51 +258,14 @@ SELECT * from requests LIMIT 10;
 
 ## ЗАДАЧА 6. Извлечение бинарника через dive и docker save
 
-### 1. Скачивание образа
 
-```bash
-docker pull hashicorp/terraform:latest
-```
+**Выполнение** `
 
-### 2. Сохранение образа в tar
-
-```bash
-docker save hashicorp/terraform:latest -o terraform.tar
-ls -lh terraform.tar
-# -rw------- 1 spet spet 8.5K Jun  9 15:19 terraform.tar
-```
-
-### 3. Попытка использования dive
-
-```bash
-dive hashicorp/terraform:latest
-```
-
-**Проблема:** Образ `hashicorp/terraform:latest` использует containerd snapshotter, из-за чего dive не может прочитать конфигурацию образа:
-```
-cannot fetch image
-could not find image config
-```
-
-### 4. Альтернативное извлечение бинарника
-
-```bash
-docker load -i terraform.tar
-docker create --name terraform-temp hashicorp/terraform:latest
-docker cp terraform-temp:/bin/terraform ~/terraform
-docker rm terraform-temp
-~/terraform --version
-```
+![7.1.png](img/7.1.png)
 
 ## DIVE
 
 ![6.1.2.png](img/6.1.2.png)
-
-
-
-**Результат:** `Terraform v1.15.5 on linux amd64`
-
-![6.1.1.png](img/6.1.1.png)
 
 ---
 
