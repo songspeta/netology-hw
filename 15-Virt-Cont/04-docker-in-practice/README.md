@@ -1,7 +1,6 @@
 # Домашнее задание к занятию  «Практическое применение Docker» - Спетницкий Д.И.
 
 
-**Репозиторий:** https://github.com/songspeta/shvirtd-example-python-netology-hw
 
 ---
 
