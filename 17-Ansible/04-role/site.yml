@@ -1,0 +1,33 @@
+---
+- name: Deploy Data Monitoring Stack (CH, Vector, Lighthouse)
+  hosts: monitoring_servers
+  become: true
+  gather_facts: true
+
+  vars:
+    ch_host_ip: "127.0.0.1"
+    ch_http_port: 8123
+    ch_tcp_port: 9000
+
+  roles:
+    - role: clickhouse
+      clickhouse_listen_host: 0.0.0.0
+      clickhouse_http_port: "{{ ch_http_port }}"
+      clickhouse_tcp_port: "{{ ch_tcp_port }}"
+      tags: ['db']
+
+    - role: vector
+      vector_sink_host: "{{ ch_host_ip }}"
+      vector_sink_port: "{{ ch_http_port }}"
+      tags: ['collector']
+
+    - role: lighthouse
+      lighthouse_ch_host: "{{ ch_host_ip }}"
+      lighthouse_ch_port: "{{ ch_http_port }}"
+      tags: ['ui']
+
+  tasks:
+    - name: Notify required manual database setup
+      ansible.builtin.debug:
+        msg: "таблица 'vector_metrics' в ClickHouse."
+      tags: [post_config]
